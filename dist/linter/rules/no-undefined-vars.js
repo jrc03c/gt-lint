@@ -1,0 +1,201 @@
+export const noUndefinedVars = {
+    name: 'no-undefined-vars',
+    description: 'Disallow use of undefined variables',
+    severity: 'error',
+    create(context) {
+        const definedVars = new Set();
+        const usedVars = [];
+        // Built-in variables and functions
+        const builtins = new Set([
+            'it', 'true', 'false', 'calendar', 'data',
+            'seconds', 'minutes', 'hours', 'days', 'weeks', 'months', 'years',
+        ]);
+        function collectDefinitions(node) {
+            if (!node || typeof node !== 'object')
+                return;
+            if (node.type === 'Program') {
+                for (const stmt of node.body) {
+                    collectDefinitions(stmt);
+                }
+            }
+            else if (node.type === 'KeywordStatement') {
+                const kw = node;
+                // *label: defines a label
+                if (kw.keyword === 'label' && kw.argument && kw.argument.type === 'TextContent') {
+                    const text = kw.argument.parts.find(p => typeof p === 'string');
+                    if (text) {
+                        definedVars.add(text.trim());
+                    }
+                }
+                // *for: defines loop variables
+                if (kw.keyword === 'for' && kw.argument && kw.argument.type === 'BinaryExpression') {
+                    // for: x in collection or for: i, x in collection
+                    collectForVars(kw.argument);
+                }
+                // *set: defines a variable
+                if (kw.keyword === 'set' && kw.argument && kw.argument.type === 'TextContent') {
+                    const text = kw.argument.parts.find(p => typeof p === 'string');
+                    if (text) {
+                        definedVars.add(text.trim());
+                    }
+                }
+                // Check sub-keywords for *save:
+                for (const sub of kw.subKeywords) {
+                    if (sub.keyword === 'save' && sub.argument && sub.argument.type === 'TextContent') {
+                        const text = sub.argument.parts.find(p => typeof p === 'string');
+                        if (text) {
+                            definedVars.add(text.trim());
+                        }
+                    }
+                    collectDefinitions(sub);
+                }
+                // Recurse into body
+                for (const stmt of kw.body) {
+                    collectDefinitions(stmt);
+                }
+            }
+            else if (node.type === 'ExpressionStatement') {
+                // Check for assignments
+                if (node.expression.type === 'BinaryExpression' && node.expression.operator === '=') {
+                    if (node.expression.left.type === 'Identifier') {
+                        definedVars.add(node.expression.left.name);
+                    }
+                }
+            }
+            else if (node.type === 'AnswerOption') {
+                for (const stmt of node.body) {
+                    collectDefinitions(stmt);
+                }
+            }
+            else if (node.type === 'SubKeyword') {
+                for (const stmt of node.body) {
+                    collectDefinitions(stmt);
+                }
+            }
+        }
+        function collectForVars(expr) {
+            if (expr.type === 'BinaryExpression' && expr.operator.toLowerCase() === 'in') {
+                // Left side contains the loop variable(s)
+                if (expr.left.type === 'Identifier') {
+                    definedVars.add(expr.left.name);
+                }
+                else if (expr.left.type === 'BinaryExpression' && expr.left.operator === ',') {
+                    // index, value pattern
+                    collectForVars(expr.left);
+                }
+            }
+            else if (expr.type === 'Identifier') {
+                definedVars.add(expr.name);
+            }
+        }
+        function collectUsages(node) {
+            if (!node || typeof node !== 'object')
+                return;
+            if (node.type === 'Program') {
+                for (const stmt of node.body) {
+                    collectUsages(stmt);
+                }
+            }
+            else if (node.type === 'Identifier') {
+                usedVars.push({
+                    name: node.name,
+                    line: node.loc.start.line,
+                    column: node.loc.start.column,
+                });
+            }
+            else if (node.type === 'KeywordStatement') {
+                const kw = node;
+                if (kw.argument) {
+                    collectUsages(kw.argument);
+                }
+                for (const sub of kw.subKeywords) {
+                    collectUsages(sub);
+                }
+                for (const stmt of kw.body) {
+                    collectUsages(stmt);
+                }
+            }
+            else if (node.type === 'SubKeyword') {
+                if (node.argument) {
+                    collectUsages(node.argument);
+                }
+                for (const stmt of node.body) {
+                    collectUsages(stmt);
+                }
+            }
+            else if (node.type === 'ExpressionStatement') {
+                collectUsages(node.expression);
+            }
+            else if (node.type === 'BinaryExpression') {
+                // Don't report the left side of assignments as usage
+                if (node.operator === '=') {
+                    collectUsages(node.right);
+                }
+                else {
+                    collectUsages(node.left);
+                    collectUsages(node.right);
+                }
+            }
+            else if (node.type === 'UnaryExpression') {
+                collectUsages(node.argument);
+            }
+            else if (node.type === 'MemberExpression') {
+                collectUsages(node.object);
+                // Don't collect property as usage
+            }
+            else if (node.type === 'CallExpression') {
+                collectUsages(node.callee);
+                for (const arg of node.arguments) {
+                    collectUsages(arg);
+                }
+            }
+            else if (node.type === 'IndexExpression') {
+                collectUsages(node.object);
+                collectUsages(node.index);
+            }
+            else if (node.type === 'ArrayExpression') {
+                for (const elem of node.elements) {
+                    collectUsages(elem);
+                }
+            }
+            else if (node.type === 'ObjectExpression') {
+                for (const prop of node.properties) {
+                    collectUsages(prop.key);
+                    collectUsages(prop.value);
+                }
+            }
+            else if (node.type === 'TextContent' || node.type === 'TextStatement') {
+                for (const part of node.parts) {
+                    if (typeof part !== 'string') {
+                        collectUsages(part);
+                    }
+                }
+            }
+            else if (node.type === 'AnswerOption') {
+                collectUsages(node.text);
+                for (const stmt of node.body) {
+                    collectUsages(stmt);
+                }
+            }
+        }
+        return {
+            Program(node) {
+                // First pass: collect all variable definitions
+                collectDefinitions(node);
+                // Second pass: collect all variable usages
+                collectUsages(node);
+                // Report undefined variables
+                for (const usage of usedVars) {
+                    if (!definedVars.has(usage.name) && !builtins.has(usage.name)) {
+                        context.report({
+                            message: `'${usage.name}' is not defined`,
+                            line: usage.line,
+                            column: usage.column,
+                        });
+                    }
+                }
+            },
+        };
+    },
+};
+//# sourceMappingURL=no-undefined-vars.js.map
