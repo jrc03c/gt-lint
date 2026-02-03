@@ -43,3 +43,4 @@ Also, it should produce extensions for IDEs like VSCode. It should show warnings
 
 - Feel free to ask clarifying questions at any time. Better to ask for clarification than to spend time potentially moving the project in the wrong direction.
 - Feel free to update this document as needed to record comments, questions, clarifications, design decisions, or anything else that seems important for you to be able to reference later.
+- The documentation website linked at the top of this document is quite large and sprawling, and I would recommend _not_ consulting it unless I'm unable to answer some specific question you might have. Between the sample programs, the `gt.pdf` file, and myself, most of your questions about the language should be answerable without needing to consult the website.
