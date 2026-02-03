@@ -35,10 +35,10 @@ npx gt-lint lint [options] [paths]
 npx gt-lint format [options] [paths]
 ```
 
-Also, it should produce extensions for IDEs like VSCode. It should show warnings and errors in the same way that ESLint does (e.g., by underlining bits of code in orange or red), and it should automatically format code on save or on keyboard shortcut. Both the linter and the formatter should allow for configuration via a file in JS, JSON, or YAML formats (called something like `gtlint.config.js`). (It doesn't necessarily need to support all three formats; it could opinionatedly pick one.)
+Also, it should produce extensions for IDEs like VSCode. These extensions should show warnings and errors in the same way that ESLint does (e.g., by underlining bits of code in orange or red), and they should automatically format code on save or on keyboard shortcut. Both the linter and the formatter should allow for configuration via a file in JS, JSON, or YAML formats (called something like `gtlint.config.js`). (It doesn't necessarily need to support all three formats; it could opinionatedly pick one.)
 
 # Guidelines
 
-- Feel free to ask clarifying questions at any time. Better to ask for clarification than to spend time potentially moving the project in the wrong direction.
-- Feel free to update this document as needed to record comments, questions, clarifications, design decisions, or anything else that seems important for you to be able to reference later.
-- The documentation website linked at the top of this document is quite large and sprawling, and I would recommend _not_ consulting it unless I'm unable to answer some specific question you might have. Between the sample programs, the `gt.pdf` file, and myself, most of your questions about the language should be answerable without needing to consult the website.
+- Feel free to ask clarifying questions at any time.
+- Feel free to update this document as needed to record comments, questions, clarifications, design decisions, or anything else that seems important for you to be able to reference later. You're welcome, too, to rewrite anything I've already written in this document to make it clearer, better organized, etc.
+- The documentation website linked at the top of this document is quite large and sprawling, and I would recommend _not_ consulting it unless I'm unable to answer some specific question you might have. But between the sample programs, the `gt.pdf` file, and myself, I suspect that most of your questions about the language will be answerable without needing to consult the website.
