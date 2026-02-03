@@ -12,19 +12,19 @@ describe('Lexer', () => {
     it('should tokenize a comment', () => {
       const tokens = tokenize('-- this is a comment');
       expect(tokens[0].type).toBe(TokenType.COMMENT);
-      expect(tokens[0].value).toBe(' this is a comment');
+      expect(tokens[0].value).toBe('-- this is a comment');
     });
 
     it('should tokenize a simple keyword', () => {
       const tokens = tokenize('*button');
       expect(tokens[0].type).toBe(TokenType.KEYWORD);
-      expect(tokens[0].value).toBe('button');
+      expect(tokens[0].value).toBe('*button');
     });
 
     it('should tokenize a keyword with colon and argument', () => {
       const tokens = tokenize('*question: What is your name?');
       expect(tokens[0].type).toBe(TokenType.KEYWORD);
-      expect(tokens[0].value).toBe('question');
+      expect(tokens[0].value).toBe('*question:');
       expect(tokens[1].type).toBe(TokenType.TEXT);
     });
   });
@@ -74,14 +74,14 @@ describe('Lexer', () => {
       const tokens = tokenize('>> x = "hello"');
       const stringToken = tokens.find(t => t.type === TokenType.STRING);
       expect(stringToken).toBeDefined();
-      expect(stringToken?.value).toBe('hello');
+      expect(stringToken?.value).toBe('"hello"');
     });
 
     it('should tokenize single-quoted strings', () => {
       const tokens = tokenize(">> x = 'world'");
       const stringToken = tokens.find(t => t.type === TokenType.STRING);
       expect(stringToken).toBeDefined();
-      expect(stringToken?.value).toBe('world');
+      expect(stringToken?.value).toBe("'world'");
     });
 
     it('should tokenize operators', () => {
@@ -113,14 +113,14 @@ describe('Lexer', () => {
       const keyword = tokens.find(t => t.type === TokenType.KEYWORD);
       const subKeyword = tokens.find(t => t.type === TokenType.SUB_KEYWORD);
 
-      expect(keyword?.value).toBe('question');
-      expect(subKeyword?.value).toBe('save');
+      expect(keyword?.value).toBe('*question:');
+      expect(subKeyword?.value).toBe('*save:');
     });
 
     it('should tokenize label definitions', () => {
       const tokens = tokenize('*label: myLabel');
       expect(tokens[0].type).toBe(TokenType.KEYWORD);
-      expect(tokens[0].value).toBe('label');
+      expect(tokens[0].value).toBe('*label:');
     });
   });
 

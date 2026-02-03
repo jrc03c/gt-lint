@@ -93,6 +93,7 @@ export interface MemberExpression extends BaseNode {
   type: 'MemberExpression';
   object: Expression;
   property: Identifier;
+  computed: boolean;
 }
 
 export interface CallExpression extends BaseNode {
@@ -198,9 +199,10 @@ export function createUnaryExpression(operator: string, argument: Expression, lo
 export function createMemberExpression(
   object: Expression,
   property: Identifier,
-  loc: SourceLocation
+  loc: SourceLocation,
+  computed: boolean = false
 ): MemberExpression {
-  return { type: 'MemberExpression', object, property, loc };
+  return { type: 'MemberExpression', object, property, computed, loc };
 }
 
 export function createCallExpression(

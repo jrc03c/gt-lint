@@ -96,9 +96,7 @@ export class Formatter {
 
     // Space around operators
     if (this.config.spaceAroundOperators) {
-      // Assignment
-      result = result.replace(/(\S)\s*=\s*(\S)/g, '$1 = $2');
-      // Comparison and arithmetic (but not in strings)
+      // Comparison, arithmetic, and assignment (but not in strings)
       result = this.formatOperatorsOutsideStrings(result);
     }
 
@@ -106,7 +104,7 @@ export class Formatter {
   }
 
   private formatOperatorsOutsideStrings(content: string): string {
-    const operators = ['+', '-', '*', '/', '%', '<', '>', '<=', '>='];
+    const operators = ['+', '-', '*', '/', '%', '<', '>', '<=', '>=', '='];
     let result = '';
     let inString = false;
     let stringChar = '';
@@ -155,17 +153,15 @@ export class Formatter {
 
       // Handle <=, >=
       if ((ch === '<' || ch === '>') && next === '=') {
-        if (this.config.spaceAroundOperators) {
-          if (result.length > 0 && result[result.length - 1] !== ' ') {
-            result += ' ';
-          }
-          result += ch + '=';
-          if (content[i + 2] && content[i + 2] !== ' ') {
-            result += ' ';
-          }
-          i++;
-          continue;
+        if (result.length > 0 && result[result.length - 1] !== ' ') {
+          result += ' ';
         }
+        result += ch + '=';
+        if (content[i + 2] && content[i + 2] !== ' ') {
+          result += ' ';
+        }
+        i++;
+        continue;
       }
 
       // Handle operators
@@ -240,8 +236,12 @@ export class Formatter {
       }
 
       // Cleanup extra spaces after opening brackets
-      if ((ch === '[' || ch === '(' || ch === '{') && next === ' ') {
+      if (ch === '[' || ch === '(' || ch === '{') {
         result += ch;
+        // Skip all spaces after opening bracket
+        while (i + 1 < content.length && content[i + 1] === ' ') {
+          i++;
+        }
         continue;
       }
 

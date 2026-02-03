@@ -50,8 +50,18 @@ export const validSubKeyword: LintRule = {
           continue;
         }
 
+        // Check if parent keyword supports sub-keywords
+        if (!validSubs) {
+          context.report({
+            message: `'*${parentKeyword}' does not support sub-keywords`,
+            line: sub.loc.start.line,
+            column: sub.loc.start.column,
+          });
+          continue;
+        }
+
         // Then check if it's valid for this parent
-        if (validSubs && !validSubs.has(subKeyword)) {
+        if (!validSubs.has(subKeyword)) {
           context.report({
             message: `'*${subKeyword}' is not a valid sub-keyword for '*${parentKeyword}'`,
             line: sub.loc.start.line,
