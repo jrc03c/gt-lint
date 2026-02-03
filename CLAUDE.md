@@ -18,7 +18,7 @@ GuidedTrack is both a domain-specific language and a service for creating simple
 
 Since this repository is mostly focused on creating a linter and formatter for the language, this document won't spend any time describing the look and feel of the programs created with the language; nor will it spend any time describing how one uses the web service. Instead, it will focus solely on the language itself.
 
-The language is designed to feel similar to Python. It uses _only_ tabs for indentation, and whitespace is significant. Please examine the files in the `/samples` folder for a taste of what it looks like.
+The language is designed to feel similar to Python. It uses _only_ tabs for indentation, and whitespace is significant. The language does not enforce a particular case for variable names; i.e., variables can use `camelCase` or `snake_case` or any other case. Please examine the files in the `/samples` folder for a taste of what it looks like.
 
 ## ESLint and Prettier
 
