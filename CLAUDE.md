@@ -14,7 +14,7 @@ Also note that there are some useful reference files in the repository:
 
 ## What is GuidedTrack?
 
-GuidedTrack is both a language and a service for creating simple web apps, forms, surveys, and other interactive web tools. It was originally designed to help accelerate psychology research by making it faster and easier for researchers (who may or may not have computer programming experience) to create and deploy web-based surveys.
+GuidedTrack is both a domain-specific language and a service for creating simple web apps, forms, surveys, and other interactive web tools. It was originally designed to help accelerate psychology research by making it faster and easier for researchers (who may or may not have computer programming experience) to create and deploy web-based surveys.
 
 Since this repository is mostly focused on creating a linter and formatter for the language, this document won't spend any time describing the look and feel of the programs created with the language; nor will it spend any time describing how one uses the web service. Instead, it will focus solely on the language itself.
 
