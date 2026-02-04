@@ -4,6 +4,7 @@
   "scopeName": "source.guidedtrack",
   "patterns": [
     { "include": "#comments" },
+    { "include": "#expression-keywords" },
     { "include": "#keywords" },
     { "include": "#sub-keywords" },
     { "include": "#expression-line" },
@@ -18,6 +19,28 @@
     "comments": {
       "name": "comment.line.double-dash.guidedtrack",
       "match": "--.*$"
+    },
+    "expression-keywords": {
+      "patterns": [
+        {
+          "match": "^(\\t*)(\\*)(if|while|for|repeat|goto|return):\\s*(.*)$",
+          "captures": {
+            "1": { "name": "punctuation.whitespace.guidedtrack" },
+            "2": { "name": "punctuation.definition.keyword.guidedtrack" },
+            "3": { "name": "keyword.control.guidedtrack" },
+            "4": {
+              "patterns": [
+                { "include": "#comments" },
+                { "include": "#strings" },
+                { "include": "#numbers" },
+                { "include": "#operators" },
+                { "include": "#built-in-functions" },
+                { "include": "#identifiers" }
+              ]
+            }
+          }
+        }
+      ]
     },
     "keywords": {
       "match": "^(\\t*)(\\*)(audio|button|chart|clear|component|database|email|events|experiment|for|goto|group|header|html|if|image|label|list|login|maintain|navigation|page|points|program|progress|purchase|question|quit|randomize|repeat|return|service|set|settings|share|summary|switch|trigger|video|wait|while)\\b",

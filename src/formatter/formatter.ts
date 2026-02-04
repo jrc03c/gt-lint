@@ -17,6 +17,7 @@ export class Formatter {
     const formattedLines: string[] = [];
     let previousLineWasBlank = false;
     let previousLineWasTopLevel = false;
+    let consecutiveBlankLines = 0;
 
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
@@ -28,6 +29,16 @@ export class Formatter {
 
       // Check if current line is blank
       const isBlank = line.trim() === '';
+
+      // Skip excess blank lines (keep at most 1)
+      if (isBlank) {
+        consecutiveBlankLines++;
+        if (consecutiveBlankLines > 1) {
+          continue; // Skip this blank line
+        }
+      } else {
+        consecutiveBlankLines = 0;
+      }
 
       // Check if current line is top-level (no indentation)
       const isTopLevel = !isBlank && !line.startsWith('\t');
@@ -81,6 +92,8 @@ export class Formatter {
 
     // Format expression lines (>> ...)
     if (content.startsWith('>>')) {
+      // Ensure exactly one space after >>
+      content = content.replace(/^>>\s*/, '>> ');
       content = this.formatExpression(content);
     }
 

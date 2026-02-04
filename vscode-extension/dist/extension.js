@@ -2513,12 +2513,21 @@ var Formatter = class {
     const formattedLines = [];
     let previousLineWasBlank = false;
     let previousLineWasTopLevel = false;
+    let consecutiveBlankLines = 0;
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
       if (this.config.trimTrailingWhitespace) {
         line = line.replace(/[ \t]+$/, "");
       }
       const isBlank = line.trim() === "";
+      if (isBlank) {
+        consecutiveBlankLines++;
+        if (consecutiveBlankLines > 1) {
+          continue;
+        }
+      } else {
+        consecutiveBlankLines = 0;
+      }
       const isTopLevel = !isBlank && !line.startsWith("	");
       if (this.config.blankLinesBetweenBlocks > 0) {
         if (isTopLevel && previousLineWasTopLevel && !previousLineWasBlank && !isBlank) {
@@ -2552,6 +2561,7 @@ var Formatter = class {
       return line;
     }
     if (content.startsWith(">>")) {
+      content = content.replace(/^>>\s*/, ">> ");
       content = this.formatExpression(content);
     }
     content = this.formatLiterals(content);

@@ -47,6 +47,20 @@ describe('Formatter', () => {
   });
 
   describe('Operator spacing', () => {
+    it('should enforce single space after >>', () => {
+      const source = '>>x = 5\n';
+      const result = format(source);
+
+      expect(result).toBe('>> x = 5\n');
+    });
+
+    it('should normalize multiple spaces after >> to single space', () => {
+      const source = '>>  x = 5\n';
+      const result = format(source);
+
+      expect(result).toBe('>> x = 5\n');
+    });
+
     it('should add spaces around operators in expressions', () => {
       const source = '>> x=1+2\n';
       const result = format(source);
@@ -126,6 +140,32 @@ Second line
       const result = format(source);
 
       expect(result).toContain('\n\n');
+    });
+
+    it('should remove excess blank lines (max 1)', () => {
+      const source = `First line
+
+
+
+Second line
+`;
+      const result = format(source);
+      const lines = result.split('\n');
+
+      // Should have at most one blank line between content
+      let maxConsecutiveBlank = 0;
+      let currentConsecutiveBlank = 0;
+
+      for (const line of lines) {
+        if (line.trim() === '') {
+          currentConsecutiveBlank++;
+          maxConsecutiveBlank = Math.max(maxConsecutiveBlank, currentConsecutiveBlank);
+        } else {
+          currentConsecutiveBlank = 0;
+        }
+      }
+
+      expect(maxConsecutiveBlank).toBeLessThanOrEqual(1);
     });
   });
 

@@ -127,7 +127,7 @@
 
 	*if: email_address_standardized
 		>> email_address = email_address_standardized
-	
+
 	*if: not email_address_standardized
 		*goto: a417726d1ac87675a43b9c2eead0b89b
 
@@ -158,7 +158,7 @@
 
 	*if: payload["reactivate_existing"] = "yes"
 		>> payload["reactivate_existing"] = true
-	
+
 *if: not ("reactivate_existing" in payload)
 	>> payload["reactivate_existing"] = true
 
