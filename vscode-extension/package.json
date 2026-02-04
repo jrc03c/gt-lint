@@ -1,0 +1,138 @@
+{
+  "name": "gtlint-vscode",
+  "displayName": "GTLint - GuidedTrack Linter",
+  "description": "Linting, formatting, and code actions for GuidedTrack (.gt) files",
+  "version": "0.1.0",
+  "publisher": "gtlint",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Formatters"
+  ],
+  "keywords": [
+    "guidedtrack",
+    "gt",
+    "linter",
+    "formatter"
+  ],
+  "activationEvents": [
+    "onLanguage:guidedtrack"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "guidedtrack",
+        "aliases": [
+          "GuidedTrack",
+          "gt"
+        ],
+        "extensions": [
+          ".gt"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "guidedtrack",
+        "scopeName": "source.guidedtrack",
+        "path": "./syntaxes/guidedtrack.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "GTLint",
+      "properties": {
+        "gtlint.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable GTLint for GuidedTrack files"
+        },
+        "gtlint.lintOnType": {
+          "type": "boolean",
+          "default": true,
+          "description": "Lint files as you type"
+        },
+        "gtlint.lintOnTypeDelay": {
+          "type": "number",
+          "default": 300,
+          "description": "Delay in milliseconds before linting after typing"
+        },
+        "gtlint.lintOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Lint files when saved"
+        },
+        "gtlint.formatOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Format files when saved (requires editor.formatOnSave to be true)"
+        },
+        "gtlint.rules": {
+          "type": "object",
+          "default": {},
+          "description": "Override lint rules (e.g., { \"no-unused-vars\": \"off\" })"
+        },
+        "gtlint.format": {
+          "type": "object",
+          "default": {},
+          "description": "Override format settings",
+          "properties": {
+            "blankLinesBetweenBlocks": {
+              "type": "number",
+              "default": 1
+            },
+            "spaceAroundOperators": {
+              "type": "boolean",
+              "default": true
+            },
+            "spaceAfterComma": {
+              "type": "boolean",
+              "default": true
+            },
+            "spaceAroundArrow": {
+              "type": "boolean",
+              "default": true
+            },
+            "trimTrailingWhitespace": {
+              "type": "boolean",
+              "default": true
+            },
+            "insertFinalNewline": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "gtlint.lintFile",
+        "title": "GTLint: Lint File"
+      },
+      {
+        "command": "gtlint.formatFile",
+        "title": "GTLint: Format File"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "npm run build -- --watch",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.10.0",
+    "esbuild": "^0.19.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "gt-lint": "file:.."
+  }
+}
