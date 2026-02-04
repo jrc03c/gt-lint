@@ -216,6 +216,43 @@ Second line
     });
   });
 
+  describe('Keyword whitespace normalization', () => {
+    it('should normalize excess whitespace in *if expressions', () => {
+      const source = '*if:           x     >           7\n';
+      const result = format(source);
+
+      expect(result).toBe('*if: x > 7\n');
+    });
+
+    it('should normalize excess whitespace in *while expressions', () => {
+      const source = '*while:    counter   <    100\n';
+      const result = format(source);
+
+      expect(result).toBe('*while: counter < 100\n');
+    });
+
+    it('should normalize excess whitespace in *for expressions', () => {
+      const source = '*for:   item    in     items\n';
+      const result = format(source);
+
+      expect(result).toBe('*for: item in items\n');
+    });
+
+    it('should preserve text content in *question keywords', () => {
+      const source = '*question:        What is your name?\n';
+      const result = format(source);
+
+      expect(result).toBe('*question: What is your name?\n');
+    });
+
+    it('should preserve string content in keyword expressions', () => {
+      const source = '*if: name = "hello     world"\n';
+      const result = format(source);
+
+      expect(result).toBe('*if: name = "hello     world"\n');
+    });
+  });
+
   describe('Complex formatting scenarios', () => {
     it('should format question with options', () => {
       const source = `*question: Pick one

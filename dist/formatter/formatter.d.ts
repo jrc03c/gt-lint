@@ -7,6 +7,8 @@ export declare class Formatter {
     private formatExpression;
     private formatOperatorsOutsideStrings;
     private formatLiterals;
+    private formatKeywordLine;
+    private normalizeWhitespace;
 }
 export declare function format(source: string, config?: Partial<FormatterConfig>): string;
 //# sourceMappingURL=formatter.d.ts.map

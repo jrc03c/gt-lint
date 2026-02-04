@@ -77,6 +77,10 @@ export class Formatter {
             content = content.replace(/^>>\s*/, '>> ');
             content = this.formatExpression(content);
         }
+        // Format keyword lines (*keyword: ...)
+        if (content.startsWith('*')) {
+            content = this.formatKeywordLine(content);
+        }
         // Format array/object literals
         content = this.formatLiterals(content);
         return indent + content;
@@ -223,6 +227,75 @@ export class Formatter {
             result += ch;
         }
         return result;
+    }
+    formatKeywordLine(content) {
+        // Match keyword pattern: *keyword: expression/text
+        const colonIndex = content.indexOf(':');
+        if (colonIndex === -1) {
+            // No colon, just return as-is (e.g., answer options like "* Option")
+            return content;
+        }
+        const keywordPart = content.slice(0, colonIndex + 1); // e.g., "*if:"
+        let expressionPart = content.slice(colonIndex + 1); // e.g., " x > 7"
+        // Keywords that require expressions (should normalize whitespace)
+        const expressionKeywords = [
+            'if', 'while', 'for', 'repeat', 'goto', 'return', 'set', 'wait',
+            'program', 'component', 'service', 'trigger', 'switch'
+        ];
+        // Extract keyword name (remove * and :)
+        const keywordName = keywordPart.slice(1, -1).trim();
+        // Check if this keyword requires expression formatting
+        if (expressionKeywords.includes(keywordName)) {
+            // Normalize whitespace in the expression part
+            expressionPart = this.normalizeWhitespace(expressionPart);
+        }
+        else {
+            // For text-based keywords (like *question:, *header:), just trim leading space
+            expressionPart = expressionPart.replace(/^\s+/, ' ');
+        }
+        return keywordPart + expressionPart;
+    }
+    normalizeWhitespace(expression) {
+        // This function normalizes excess whitespace while preserving string content
+        let result = '';
+        let inString = false;
+        let stringChar = '';
+        let lastWasSpace = false;
+        const trimmed = expression.trim();
+        for (let i = 0; i < trimmed.length; i++) {
+            const ch = trimmed[i];
+            // Handle string boundaries
+            if (!inString && (ch === '"' || ch === "'")) {
+                inString = true;
+                stringChar = ch;
+                result += ch;
+                lastWasSpace = false;
+                continue;
+            }
+            if (inString && ch === stringChar) {
+                inString = false;
+                stringChar = '';
+                result += ch;
+                lastWasSpace = false;
+                continue;
+            }
+            // If in string, preserve all whitespace
+            if (inString) {
+                result += ch;
+                continue;
+            }
+            // Normalize whitespace outside strings
+            if (ch === ' ' || ch === '\t') {
+                if (!lastWasSpace && result.length > 0) {
+                    result += ' ';
+                    lastWasSpace = true;
+                }
+                continue;
+            }
+            result += ch;
+            lastWasSpace = false;
+        }
+        return ' ' + result;
     }
 }
 export function format(source, config) {

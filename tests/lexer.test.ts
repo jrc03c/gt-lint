@@ -77,11 +77,11 @@ describe('Lexer', () => {
       expect(stringToken?.value).toBe('"hello"');
     });
 
-    it('should tokenize single-quoted strings', () => {
+    it('should NOT tokenize single-quoted strings (double quotes only)', () => {
       const tokens = tokenize(">> x = 'world'");
       const stringToken = tokens.find(t => t.type === TokenType.STRING);
-      expect(stringToken).toBeDefined();
-      expect(stringToken?.value).toBe("'world'");
+      // Single quotes are not valid in GuidedTrack - only double quotes
+      expect(stringToken).toBeUndefined();
     });
 
     it('should tokenize operators', () => {

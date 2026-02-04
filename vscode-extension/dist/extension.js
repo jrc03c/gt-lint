@@ -2564,6 +2564,9 @@ var Formatter = class {
       content = content.replace(/^>>\s*/, ">> ");
       content = this.formatExpression(content);
     }
+    if (content.startsWith("*")) {
+      content = this.formatKeywordLine(content);
+    }
     content = this.formatLiterals(content);
     return indent + content;
   }
@@ -2689,6 +2692,74 @@ var Formatter = class {
       result += ch;
     }
     return result;
+  }
+  formatKeywordLine(content) {
+    const colonIndex = content.indexOf(":");
+    if (colonIndex === -1) {
+      return content;
+    }
+    const keywordPart = content.slice(0, colonIndex + 1);
+    let expressionPart = content.slice(colonIndex + 1);
+    const expressionKeywords = [
+      "if",
+      "while",
+      "for",
+      "repeat",
+      "goto",
+      "return",
+      "set",
+      "wait",
+      "program",
+      "component",
+      "service",
+      "trigger",
+      "switch"
+    ];
+    const keywordName = keywordPart.slice(1, -1).trim();
+    if (expressionKeywords.includes(keywordName)) {
+      expressionPart = this.normalizeWhitespace(expressionPart);
+    } else {
+      expressionPart = expressionPart.replace(/^\s+/, " ");
+    }
+    return keywordPart + expressionPart;
+  }
+  normalizeWhitespace(expression) {
+    let result = "";
+    let inString = false;
+    let stringChar = "";
+    let lastWasSpace = false;
+    const trimmed = expression.trim();
+    for (let i = 0; i < trimmed.length; i++) {
+      const ch = trimmed[i];
+      if (!inString && (ch === '"' || ch === "'")) {
+        inString = true;
+        stringChar = ch;
+        result += ch;
+        lastWasSpace = false;
+        continue;
+      }
+      if (inString && ch === stringChar) {
+        inString = false;
+        stringChar = "";
+        result += ch;
+        lastWasSpace = false;
+        continue;
+      }
+      if (inString) {
+        result += ch;
+        continue;
+      }
+      if (ch === " " || ch === "	") {
+        if (!lastWasSpace && result.length > 0) {
+          result += " ";
+          lastWasSpace = true;
+        }
+        continue;
+      }
+      result += ch;
+      lastWasSpace = false;
+    }
+    return " " + result;
   }
 };
 
