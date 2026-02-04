@@ -1,4 +1,4 @@
-import { Token, TokenType, KEYWORDS } from '../lexer/index.js';
+import { Token, TokenType, KEYWORDS, tokenize } from '../lexer/index.js';
 import type { SourceLocation } from '../types.js';
 import {
   Program,
@@ -138,13 +138,22 @@ export class Parser {
     const keyword = this.extractKeywordName(keywordToken.value);
     const startToken = keywordToken;
 
+    // Keywords that expect expressions
+    const expressionKeywords = ['if', 'while', 'for', 'wait'];
+
     // Parse argument (text after the colon)
     let argument: Expression | TextContent | null = null;
     if (this.check(TokenType.TEXT)) {
-      argument = this.parseTextContent();
+      // For expression keywords, re-tokenize and parse as expression
+      if (expressionKeywords.includes(keyword)) {
+        const textToken = this.advance();
+        argument = this.parseTextAsExpression(textToken.value, textToken);
+      } else {
+        argument = this.parseTextContent();
+      }
     } else if (!this.check(TokenType.NEWLINE) && !this.check(TokenType.EOF) && !this.isAtEnd()) {
       // Try to parse as expression for certain keywords
-      if (['if', 'while', 'for', 'wait'].includes(keyword)) {
+      if (expressionKeywords.includes(keyword)) {
         argument = this.parseExpression();
       }
     }
@@ -670,6 +679,41 @@ export class Parser {
       name = name.slice(0, -1);
     }
     return name.toLowerCase();
+  }
+
+  /**
+   * Re-tokenizes and parses a text string as an expression.
+   * This is used for keywords like *if:, *while:, etc. that expect expressions
+   * but initially receive TEXT tokens from the lexer.
+   */
+  private parseTextAsExpression(text: string, _originalToken: Token): Expression {
+    // Prepend >> to make the lexer treat it as an expression
+    const exprSource = `>> ${text}`;
+
+    // Re-tokenize the text as an expression
+    const allTokens = tokenize(exprSource);
+
+    // Skip EXPRESSION_START token and EOF token
+    const exprTokens = allTokens.filter((t: Token) =>
+      t.type !== TokenType.EXPRESSION_START && t.type !== TokenType.EOF
+    );
+
+    // Store current parser state
+    const savedTokens = this.tokens;
+    const savedPos = this.pos;
+
+    // Temporarily replace tokens with expression tokens
+    this.tokens = exprTokens;
+    this.pos = 0;
+
+    // Parse as expression
+    const expr = this.parseExpression();
+
+    // Restore parser state
+    this.tokens = savedTokens;
+    this.pos = savedPos;
+
+    return expr;
   }
 
   private createLoc(start: Token | { line: number; column: number; offset: number }, end: Token | { line: number; column: number; offset: number }): SourceLocation {

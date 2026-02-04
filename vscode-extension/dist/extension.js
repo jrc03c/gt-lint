@@ -41,7 +41,7 @@ var vscode = __toESM(require("vscode"));
 var path = __toESM(require("path"));
 var fs = __toESM(require("fs"));
 
-// ../dist/lexer/tokens.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/lexer/tokens.js
 var TokenType;
 (function(TokenType2) {
   TokenType2["NEWLINE"] = "NEWLINE";
@@ -202,7 +202,7 @@ var OPERATORS = /* @__PURE__ */ new Set([
   "in"
 ]);
 
-// ../dist/lexer/lexer.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/lexer/lexer.js
 var Lexer = class {
   source;
   pos = 0;
@@ -782,7 +782,7 @@ function tokenize(source) {
   return lexer.tokenize();
 }
 
-// ../dist/parser/ast.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/parser/ast.js
 function createProgram(body, loc) {
   return { type: "Program", body, loc };
 }
@@ -838,7 +838,7 @@ function createProperty(key, value, loc) {
   return { type: "Property", key, value, loc };
 }
 
-// ../dist/parser/parser.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/parser/parser.js
 var Parser = class {
   tokens = [];
   pos = 0;
@@ -913,11 +913,17 @@ var Parser = class {
     const keywordToken = this.advance();
     const keyword = this.extractKeywordName(keywordToken.value);
     const startToken = keywordToken;
+    const expressionKeywords = ["if", "while", "for", "wait"];
     let argument = null;
     if (this.check(TokenType.TEXT)) {
-      argument = this.parseTextContent();
+      if (expressionKeywords.includes(keyword)) {
+        const textToken = this.advance();
+        argument = this.parseTextAsExpression(textToken.value, textToken);
+      } else {
+        argument = this.parseTextContent();
+      }
     } else if (!this.check(TokenType.NEWLINE) && !this.check(TokenType.EOF) && !this.isAtEnd()) {
-      if (["if", "while", "for", "wait"].includes(keyword)) {
+      if (expressionKeywords.includes(keyword)) {
         argument = this.parseExpression();
       }
     }
@@ -1266,6 +1272,24 @@ var Parser = class {
     }
     return name.toLowerCase();
   }
+  /**
+   * Re-tokenizes and parses a text string as an expression.
+   * This is used for keywords like *if:, *while:, etc. that expect expressions
+   * but initially receive TEXT tokens from the lexer.
+   */
+  parseTextAsExpression(text, _originalToken) {
+    const exprSource = `>> ${text}`;
+    const allTokens = tokenize(exprSource);
+    const exprTokens = allTokens.filter((t) => t.type !== TokenType.EXPRESSION_START && t.type !== TokenType.EOF);
+    const savedTokens = this.tokens;
+    const savedPos = this.pos;
+    this.tokens = exprTokens;
+    this.pos = 0;
+    const expr = this.parseExpression();
+    this.tokens = savedTokens;
+    this.pos = savedPos;
+    return expr;
+  }
   createLoc(start, end) {
     const startPos = "line" in start && "column" in start && "offset" in start && !("type" in start) ? start : { line: start.line, column: start.column, offset: start.offset };
     const endPos = "line" in end && "column" in end && "offset" in end && !("type" in end) ? end : { line: end.endLine, column: end.endColumn, offset: end.endOffset };
@@ -1303,7 +1327,7 @@ function parse(tokens) {
   return parser.parse(tokens);
 }
 
-// ../dist/types.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/types.js
 var DEFAULT_FORMATTER_CONFIG = {
   blankLinesBetweenBlocks: 1,
   spaceAroundOperators: true,
@@ -1328,7 +1352,7 @@ var DEFAULT_LINTER_CONFIG = {
   ignore: ["**/node_modules/**", "**/dist/**"]
 };
 
-// ../dist/linter/rules/no-undefined-vars.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/no-undefined-vars.js
 var noUndefinedVars = {
   name: "no-undefined-vars",
   description: "Disallow use of undefined variables",
@@ -1413,7 +1437,7 @@ var noUndefinedVars = {
         definedVars.add(expr.name);
       }
     }
-    function collectUsages(node) {
+    function collectUsages(node, isAssignmentContext = false) {
       if (!node || typeof node !== "object")
         return;
       if (node.type === "Program") {
@@ -1429,7 +1453,7 @@ var noUndefinedVars = {
       } else if (node.type === "KeywordStatement") {
         const kw = node;
         if (kw.argument) {
-          collectUsages(kw.argument);
+          collectUsages(kw.argument, false);
         }
         for (const sub of kw.subKeywords) {
           collectUsages(sub);
@@ -1445,43 +1469,43 @@ var noUndefinedVars = {
           collectUsages(stmt);
         }
       } else if (node.type === "ExpressionStatement") {
-        collectUsages(node.expression);
+        collectUsages(node.expression, true);
       } else if (node.type === "BinaryExpression") {
-        if (node.operator === "=") {
-          collectUsages(node.right);
+        if (node.operator === "=" && isAssignmentContext) {
+          collectUsages(node.right, false);
         } else {
-          collectUsages(node.left);
-          collectUsages(node.right);
+          collectUsages(node.left, false);
+          collectUsages(node.right, false);
         }
       } else if (node.type === "UnaryExpression") {
-        collectUsages(node.argument);
+        collectUsages(node.argument, false);
       } else if (node.type === "MemberExpression") {
-        collectUsages(node.object);
+        collectUsages(node.object, false);
       } else if (node.type === "CallExpression") {
-        collectUsages(node.callee);
+        collectUsages(node.callee, false);
         for (const arg of node.arguments) {
-          collectUsages(arg);
+          collectUsages(arg, false);
         }
       } else if (node.type === "IndexExpression") {
-        collectUsages(node.object);
-        collectUsages(node.index);
+        collectUsages(node.object, false);
+        collectUsages(node.index, false);
       } else if (node.type === "ArrayExpression") {
         for (const elem of node.elements) {
-          collectUsages(elem);
+          collectUsages(elem, false);
         }
       } else if (node.type === "ObjectExpression") {
         for (const prop of node.properties) {
-          collectUsages(prop.key);
-          collectUsages(prop.value);
+          collectUsages(prop.key, false);
+          collectUsages(prop.value, false);
         }
       } else if (node.type === "TextContent" || node.type === "TextStatement") {
         for (const part of node.parts) {
           if (typeof part !== "string") {
-            collectUsages(part);
+            collectUsages(part, false);
           }
         }
       } else if (node.type === "AnswerOption") {
-        collectUsages(node.text);
+        collectUsages(node.text, false);
         for (const stmt of node.body) {
           collectUsages(stmt);
         }
@@ -1491,9 +1515,10 @@ var noUndefinedVars = {
       Program(node) {
         collectDefinitions(node);
         collectUsages(node);
-        const expectedVars = context.getExpectedVars();
+        const fromParentVars = context.getFromParentVars();
+        const fromChildVars = context.getFromChildVars();
         for (const usage of usedVars) {
-          if (!definedVars.has(usage.name) && !builtins.has(usage.name) && !expectedVars.has(usage.name)) {
+          if (!definedVars.has(usage.name) && !builtins.has(usage.name) && !fromParentVars.has(usage.name) && !fromChildVars.has(usage.name)) {
             context.report({
               message: `'${usage.name}' is not defined`,
               line: usage.line,
@@ -1506,7 +1531,7 @@ var noUndefinedVars = {
   }
 };
 
-// ../dist/linter/rules/no-unused-vars.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/no-unused-vars.js
 var noUnusedVars = {
   name: "no-unused-vars",
   description: "Warn about variables that are never used",
@@ -1655,9 +1680,10 @@ var noUnusedVars = {
       Program(node) {
         collectDefinitions(node);
         collectUsages(node);
-        const returnedVars = context.getReturnedVars();
+        const toParentVars = context.getToParentVars();
+        const toChildVars = context.getToChildVars();
         for (const [name, info] of definedVars) {
-          if (info.usages === 0 && !returnedVars.has(name)) {
+          if (info.usages === 0 && !toParentVars.has(name) && !toChildVars.has(name)) {
             context.report({
               message: `'${name}' is defined but never used`,
               line: info.line,
@@ -1670,7 +1696,7 @@ var noUnusedVars = {
   }
 };
 
-// ../dist/linter/rules/valid-keyword.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/valid-keyword.js
 var validKeyword = {
   name: "valid-keyword",
   description: "Ensure keywords are valid GuidedTrack keywords",
@@ -1710,7 +1736,7 @@ var validKeyword = {
   }
 };
 
-// ../dist/linter/rules/valid-sub-keyword.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/valid-sub-keyword.js
 var KEYWORD_SUB_KEYWORDS = {
   audio: /* @__PURE__ */ new Set(["start", "hide"]),
   chart: /* @__PURE__ */ new Set(["type", "data", "xaxis", "yaxis", "trendline", "min", "max"]),
@@ -1813,7 +1839,7 @@ var validSubKeyword = {
   }
 };
 
-// ../dist/linter/rules/no-invalid-goto.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/no-invalid-goto.js
 var noInvalidGoto = {
   name: "no-invalid-goto",
   description: "Ensure *goto targets exist",
@@ -1895,7 +1921,7 @@ var noInvalidGoto = {
   }
 };
 
-// ../dist/linter/rules/indent-style.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/indent-style.js
 var indentStyle = {
   name: "indent-style",
   description: "Enforce tabs for indentation",
@@ -1944,7 +1970,7 @@ function getLineOffset(lines, lineIndex) {
   return offset;
 }
 
-// ../dist/linter/rules/no-unclosed-string.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/no-unclosed-string.js
 var noUnclosedString = {
   name: "no-unclosed-string",
   description: "Detect unclosed string literals",
@@ -1990,7 +2016,7 @@ var noUnclosedString = {
   }
 };
 
-// ../dist/linter/rules/no-unclosed-bracket.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/no-unclosed-bracket.js
 var noUnclosedBracket = {
   name: "no-unclosed-bracket",
   description: "Detect unclosed brackets/braces",
@@ -2069,7 +2095,7 @@ var noUnclosedBracket = {
   }
 };
 
-// ../dist/linter/rules/no-single-quotes.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/no-single-quotes.js
 var noSingleQuotes = {
   name: "no-single-quotes",
   description: "Disallow single quotes for strings (use double quotes)",
@@ -2135,7 +2161,7 @@ function checkStringForSingleQuotes(text, lineNumber, startCol, context) {
   }
 }
 
-// ../dist/linter/rules/index.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/rules/index.js
 var rules = {
   "no-undefined-vars": noUndefinedVars,
   "no-unused-vars": noUnusedVars,
@@ -2148,13 +2174,15 @@ var rules = {
   "no-single-quotes": noSingleQuotes
 };
 
-// ../dist/linter/directives.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/directives.js
 function parseDirectives(source) {
   const lines = source.split("\n");
   const state = {
     disabledLines: /* @__PURE__ */ new Map(),
-    expectedVars: /* @__PURE__ */ new Set(),
-    returnedVars: /* @__PURE__ */ new Set()
+    fromParentVars: /* @__PURE__ */ new Set(),
+    fromChildVars: /* @__PURE__ */ new Set(),
+    toParentVars: /* @__PURE__ */ new Set(),
+    toChildVars: /* @__PURE__ */ new Set()
   };
   const activeDisables = /* @__PURE__ */ new Map();
   let nextLineDisable = null;
@@ -2213,19 +2241,35 @@ function parseDirectives(source) {
       }
       continue;
     }
-    if (commentContent.startsWith("@expects:")) {
-      const varsStr = commentContent.slice("@expects:".length).trim();
+    if (commentContent.startsWith("@from-parent:")) {
+      const varsStr = commentContent.slice("@from-parent:".length).trim();
       const vars = parseVarList(varsStr);
       for (const v of vars) {
-        state.expectedVars.add(v);
+        state.fromParentVars.add(v);
       }
       continue;
     }
-    if (commentContent.startsWith("@returns:")) {
-      const varsStr = commentContent.slice("@returns:".length).trim();
+    if (commentContent.startsWith("@from-child:")) {
+      const varsStr = commentContent.slice("@from-child:".length).trim();
       const vars = parseVarList(varsStr);
       for (const v of vars) {
-        state.returnedVars.add(v);
+        state.fromChildVars.add(v);
+      }
+      continue;
+    }
+    if (commentContent.startsWith("@to-parent:")) {
+      const varsStr = commentContent.slice("@to-parent:".length).trim();
+      const vars = parseVarList(varsStr);
+      for (const v of vars) {
+        state.toParentVars.add(v);
+      }
+      continue;
+    }
+    if (commentContent.startsWith("@to-child:")) {
+      const varsStr = commentContent.slice("@to-child:".length).trim();
+      const vars = parseVarList(varsStr);
+      for (const v of vars) {
+        state.toChildVars.add(v);
       }
       continue;
     }
@@ -2270,7 +2314,7 @@ function isRuleDisabled(state, line, ruleId) {
   return disabled.has(ruleId);
 }
 
-// ../dist/linter/linter.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/linter/linter.js
 var Linter = class {
   config;
   messages = [];
@@ -2315,8 +2359,10 @@ var Linter = class {
           });
         },
         getSourceCode: () => source,
-        getExpectedVars: () => directives.expectedVars,
-        getReturnedVars: () => directives.returnedVars
+        getFromParentVars: () => directives.fromParentVars,
+        getFromChildVars: () => directives.fromChildVars,
+        getToParentVars: () => directives.toParentVars,
+        getToChildVars: () => directives.toChildVars
       };
       const visitor = rule.create(context);
       this.visitNode(ast, visitor);
@@ -2440,7 +2486,7 @@ var Linter = class {
   }
 };
 
-// ../dist/formatter/formatter.js
+// ../node_modules/.pnpm/gt-lint@file+/node_modules/gt-lint/dist/formatter/formatter.js
 var Formatter = class {
   config;
   constructor(config = {}) {

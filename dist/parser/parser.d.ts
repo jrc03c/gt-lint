@@ -31,6 +31,12 @@ export declare class Parser {
     private parseObjectLiteral;
     private parseArguments;
     private extractKeywordName;
+    /**
+     * Re-tokenizes and parses a text string as an expression.
+     * This is used for keywords like *if:, *while:, etc. that expect expressions
+     * but initially receive TEXT tokens from the lexer.
+     */
+    private parseTextAsExpression;
     private createLoc;
     private createLocFromToken;
     private peek;
