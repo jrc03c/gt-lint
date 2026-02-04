@@ -19,7 +19,8 @@
       "Bash(npx tsc:*)",
       "Bash(pnpm run test)",
       "Bash(tree:*)",
-      "Read(//home/josh/**)"
+      "Read(//home/josh/**)",
+      "Bash(npm test:*)"
     ]
   }
 }
