@@ -74,11 +74,15 @@ The core infrastructure for GTLint is now in place:
   - `no-unclosed-string` - detects unclosed string literals
   - `no-unclosed-bracket` - detects unclosed brackets/braces/parentheses
   - `no-single-quotes` - enforces double quotes for strings
-- Supports inline directive comments: `-- gtlint-disable`, `-- gtlint-disable-line`, `-- gtlint-disable-next-line`
+- Supports inline directive comments with three prefix types:
+  - `gt-*` directives affect both linting and formatting
+  - `gtlint-*` directives affect linting only
+  - `gtformat-*` directives affect formatting only
 
 ### Formatter (`src/formatter/`)
 - Automatically formats GuidedTrack code
 - Configurable options for spacing, blank lines, trailing whitespace
+- Respects `gtformat-disable` and `gt-disable` directive regions
 
 ### CLI (`src/cli.ts`)
 - Command-line interface with `gtlint lint` and `gtlint format` commands

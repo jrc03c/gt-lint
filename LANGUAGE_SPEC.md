@@ -373,16 +373,35 @@ HTTP requests to external APIs:
 		>> error_msg = it
 ```
 
-### Linter Directives
+### GTLint Directives
 
-Control linting behavior with special comments:
+Control linting and formatting behavior with special comments. Three prefix types are available:
 
+**Combined directives** (affect both linting and formatting):
 ```guidedtrack
--- gtlint-disable
--- gtlint-disable-next-line
--- gtlint-disable-line
--- gtlint-enable
+-- gt-disable                    -- Disable lint + format until gt-enable or EOF
+-- gt-enable                     -- Re-enable lint + format
+-- gt-disable-next-line          -- Disable lint + format for next line only
+-- gt-disable-next-line rule1    -- Disable specific lint rules + format for next line
 ```
+
+**Lint-only directives**:
+```guidedtrack
+-- gtlint-disable                -- Disable all lint rules until gtlint-enable or EOF
+-- gtlint-disable rule1, rule2   -- Disable specific lint rules
+-- gtlint-enable                 -- Re-enable all lint rules
+-- gtlint-enable rule1           -- Re-enable specific lint rule
+-- gtlint-disable-next-line      -- Disable all lint rules for next line
+-- gtlint-disable-next-line rule1, rule2  -- Disable specific rules for next line
+```
+
+**Format-only directives**:
+```guidedtrack
+-- gtformat-disable              -- Disable formatting until gtformat-enable or EOF
+-- gtformat-enable               -- Re-enable formatting
+```
+
+Note: `gtformat-*` directives don't support rule lists since formatting isn't rule-based.
 
 ## Formatting Conventions
 
@@ -428,7 +447,7 @@ Control linting behavior with special comments:
 
 **Important distinctions:**
 - `*program:` is like a function call - it returns to the next line (unlike `*goto:`)
-- Comments starting with `-- gtlint-*` are linter directives, not regular comments
+- Comments starting with `-- gt-*`, `-- gtlint-*`, or `-- gtformat-*` are directives, not regular comments
 - Variables from parent programs (via `@from-parent:`) are not visible to the linter
 
 ## Notes for Implementation

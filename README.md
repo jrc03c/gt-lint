@@ -143,31 +143,69 @@ GTLint includes the following linting rules:
 - **`indent-style`** - Enforces tab-only indentation (GuidedTrack requirement)
 - **`no-single-quotes`** - Enforces double quotes for string literals
 
-## Disabling Rules
+## Disabling Rules and Formatting
 
-You can disable rules for specific lines or sections using inline comments:
+You can disable linting and/or formatting for specific lines or sections using inline comments. GTLint supports three directive prefixes:
+
+- **`gt-*`** - Affects both linting and formatting
+- **`gtlint-*`** - Affects linting only
+- **`gtformat-*`** - Affects formatting only
+
+### Examples
 
 ```
+-- Disable specific lint rule for next line
 -- gtlint-disable-next-line no-unused-vars
 >> temp_variable = 42
 
+-- Disable all linting in a region
 -- gtlint-disable no-undefined-vars
 >> x = some_undefined_var
 >> y = another_undefined_var
 -- gtlint-enable no-undefined-vars
 
--- gtlint-disable-line no-invalid-goto
-*goto: some_label
+-- Disable formatting in a region (preserve exact whitespace)
+-- gtformat-disable
+>>   x   =   5
+>>   y   =   10
+-- gtformat-enable
+
+-- Disable both linting AND formatting
+-- gt-disable
+>> badly_formatted = some_undefined_var
+-- gt-enable
 ```
 
-**Directive comments:**
+### Directive Reference
 
-- `-- gtlint-disable` - Disable all rules for the rest of the file
-- `-- gtlint-enable` - Re-enable all rules
-- `-- gtlint-disable <rule>` - Disable a specific rule
-- `-- gtlint-enable <rule>` - Re-enable a specific rule
-- `-- gtlint-disable-line` - Disable rules for the current line
-- `-- gtlint-disable-next-line` - Disable rules for the next line
+**Combined (lint + format):**
+
+| Directive | Behavior |
+|-----------|----------|
+| `-- gt-disable` | Disable lint + format until `gt-enable` or EOF |
+| `-- gt-enable` | Re-enable lint + format |
+| `-- gt-disable-next-line` | Disable lint + format for next line only |
+| `-- gt-disable-next-line rule1, rule2` | Disable specific lint rules + format for next line |
+
+**Lint-only:**
+
+| Directive | Behavior |
+|-----------|----------|
+| `-- gtlint-disable` | Disable all lint rules until `gtlint-enable` or EOF |
+| `-- gtlint-disable rule1, rule2` | Disable specific lint rules |
+| `-- gtlint-enable` | Re-enable all lint rules |
+| `-- gtlint-enable rule1` | Re-enable specific lint rule |
+| `-- gtlint-disable-next-line` | Disable all lint rules for next line |
+| `-- gtlint-disable-next-line rule1, rule2` | Disable specific rules for next line |
+
+**Format-only:**
+
+| Directive | Behavior |
+|-----------|----------|
+| `-- gtformat-disable` | Disable formatting until `gtformat-enable` or EOF |
+| `-- gtformat-enable` | Re-enable formatting |
+
+Note: `gtformat-*` directives don't support rule lists since formatting isn't rule-based.
 
 ## Declaring Program APIs
 
