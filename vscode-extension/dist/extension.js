@@ -555,10 +555,13 @@ var Lexer = class {
       this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
     }
   }
-  scanExpression() {
+  scanExpression(stopAtCloseBrace = false) {
     this.skipSpaces();
+    let braceDepth = 0;
     while (!this.isAtEnd() && this.peek() !== "\n" && this.peek() !== "\r") {
       const ch = this.peek();
+      if (stopAtCloseBrace && ch === "}" && braceDepth === 0)
+        return;
       if (ch === " ") {
         this.advance();
         continue;
@@ -605,11 +608,13 @@ var Lexer = class {
         continue;
       }
       if (ch === "{") {
+        braceDepth++;
         this.emitToken(TokenType.LBRACE, ch);
         this.advance();
         continue;
       }
       if (ch === "}") {
+        braceDepth--;
         this.emitToken(TokenType.RBRACE, ch);
         this.advance();
         continue;
@@ -803,31 +808,9 @@ var Lexer = class {
     }
   }
   scanInterpolation() {
-    const startLine = this.line;
-    const startCol = this.column;
-    const startOffset = this.pos;
     this.emitToken(TokenType.INTERPOLATION_START, "{");
     this.advance();
-    let depth = 1;
-    let exprStart = this.pos;
-    while (!this.isAtEnd() && depth > 0) {
-      const ch = this.peek();
-      if (ch === "{")
-        depth++;
-      if (ch === "}")
-        depth--;
-      if (ch === "\n" || ch === "\r") {
-        const value = this.source.slice(exprStart, this.pos);
-        this.tokens.push(createToken(TokenType.ERROR, value, startLine, startCol + 1, exprStart, this.line, this.column, this.pos));
-        return;
-      }
-      if (depth > 0)
-        this.advance();
-    }
-    const exprValue = this.source.slice(exprStart, this.pos);
-    if (exprValue.trim()) {
-      this.tokens.push(createToken(TokenType.IDENTIFIER, exprValue.trim(), startLine, startCol + 1, exprStart, this.line, this.column, this.pos));
-    }
+    this.scanExpression(true);
     if (!this.isAtEnd() && this.peek() === "}") {
       this.emitToken(TokenType.INTERPOLATION_END, "}");
       this.advance();
@@ -1116,9 +1099,8 @@ var Parser = class {
     while (this.check(TokenType.TEXT) || this.check(TokenType.IDENTIFIER) || this.check(TokenType.INTERPOLATION_START)) {
       if (this.check(TokenType.INTERPOLATION_START)) {
         this.advance();
-        if (this.check(TokenType.IDENTIFIER)) {
-          const id = this.advance();
-          parts.push(createIdentifier(id.value, this.createLocFromToken(id)));
+        if (!this.check(TokenType.INTERPOLATION_END)) {
+          parts.push(this.parseExpression());
         }
         if (this.check(TokenType.INTERPOLATION_END)) {
           this.advance();

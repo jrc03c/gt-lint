@@ -1,0 +1,463 @@
+-- gtlint-disable-next-line
+{{docs}}
+
+-- @from-parent: alternateEmailSolicitation
+-- @from-parent: currentProgramName
+-- @from-parent: headerBeforeEmailSolicitation
+-- @from-parent: noe
+-- @from-parent: noReport
+
+-- @to-child: beehiiv_publication_id
+-- @to-child: error_title
+-- @to-child: error_is_fatal
+-- @to-child: error_message
+-- @to-child: info_message
+-- @to-child: info_title
+-- @to-child: warning_message
+-- @to-child: warning_title
+
+>> errors = 0
+>> error_title = "{{ title }}"
+
+>> error_is_fatal = "yes"
+>> error_message = "Right now, the <code>willSendReport</code> and <code>shouldAddToMailingList</code> variables are mutually exclusive, which shouldn't be the case! Please fix them!"
+
+*program: @jrc03c/show-error
+
+*if: not error_is_fatal
+	>> error_is_fatal = "no"
+
+*if: not currentProgramName
+	>> error_message = "You must define a variable called <code>currentProgramName</code> that has a string value representing the name of the Clearer Thinking program!"
+	*program: @jrc03c/show-error
+	*goto: MailingListEndLabel
+
+*if: not displayWhyEnterEmail
+	>> displayWhyEnterEmail = 0
+
+*if: not willSendReport
+	>> willSendReport = 0
+
+	*if: noe
+		>> willSendReport = 1
+
+	*if: noReport
+		*if: noReport = 0
+			>> willSendReport = 1
+
+*if: not shouldAddToMailingList
+	>> shouldAddToMailingList = 1
+
+	*if: noe
+		>> shouldAddToMailingList = 0
+
+*if: not shouldSendWelcomeEmail
+	>> shouldSendWelcomeEmail = shouldAddToMailingList
+
+*if: (not textUnderMailImage) and (willSendReport = 0)
+	*randomize
+		-- *name: emailpitch
+		*group: originalpitch
+			>> textUnderMailImage = "[ClearerThinking.org|http://www.clearerthinking.org] is constantly creating new mini-courses and tools that can help you enhance your decision-making and sharpen your reasoning. Our totally free programs are designed to improve your life!"
+		*group: selfinterestpitch
+			>> textUnderMailImage = "[ClearerThinking.org|http://www.clearerthinking.org] regularly creates mini-courses and tools that can help you improve your work performance, get along better with your loved ones, and become a happier, healthier person. Sign up for our newsletter to start achieving your goals and reaching your potential with our totally free programs!"
+		*group: newnesspitch
+			>> textUnderMailImage = "[ClearerThinking.org|http://www.clearerthinking.org] releases newly developed mini-courses and tools on a regular basis. If you sign up for our newsletter, you'll be one of the first people to gain access to these powerful programs and put their valuable lessons to use in the parts of life you care about most."
+		*group: fearoflosspitch
+			>> textUnderMailImage = "[ClearerThinking.org|http://www.clearerthinking.org] releases brand-new mini-courses and tools on a regular basis. Don't miss out on the chance to learn valuable lessons and powerful life hacks from these free programs!"
+
+*if: alternateEmailSolicitation
+	>> emailSolicitationQuestion = alternateEmailSolicitation
+
+*if: not emailSolicitationQuestion
+	*if: willSendReport = 0
+		>> emailSolicitationQuestion = "Would you like to subscribe to the Clearer Thinking newsletter?"
+
+	*if: willSendReport = 1
+		>> emailSolicitationQuestion = "Please enter your email address so we can send you a report with your results after you finish the tool."
+
+*if: not emailSolicitationTip
+	*if: willSendReport = 0
+		>> emailSolicitationTip = "You can unsubscribe at any time with one click. No fuss, no spam. If you would prefer not to sign up to the newsletter, just leave the box blank and click 'Submit'."
+
+	*if: willSendReport = 1
+		>> emailSolicitationTip = "If you would prefer not to share your email address, just leave the box blank and click 'Submit'."
+
+*if: not skipEmailSolicitation
+	>> skipEmailSolicitation = 0
+
+*if: not theirEmail
+	>> theirEmail = ""
+
+*if: not (theirEmail.type = "string")
+	>> theirEmail = ""
+
+*if: not invalidEmail
+	>> invalidEmail = 0
+
+*if: not utm_source
+	>> utm_source = "(none)"
+
+*if: not utm_medium
+	>> utm_medium = "(none)"
+
+*if: not utm_campaign
+	>> utm_campaign = "(none)"
+
+>> mailchimp_list_id = "f2e9d15594"
+>> beehiiv_publication_id = "pub_d0ed5a5f-0bca-4054-ab2c-73fd51707f71"
+>> alreadyTriedValidatingEmailAddress = 0
+
+--------------------------------------------------------------------------------
+-- Notes
+--------------------------------------------------------------------------------
+
+-- (1) Log the course completion to the dashboard (if at end of program). See https://www.guidedtrack.com/programs/8783/edit?line_number=24 for more info. (Should this be factored out into its own program since *this* program might be run either at the beginning or end of a CT program?)
+
+-- (2) Display brand logos for MLA? (It does seem like this functionality really ought to live in a single program, not in one program for regular CT tools and another for partner-branded programs. But I'm not sure right now.)
+
+-- (3) Display pitch parts in this order:
+--     (a) headerBeforeEmailSolicitation
+--     (b) textUnderMailImage
+--     (c) displayWhyEnterEmail
+--     (d) the *question content (plus a *tip)
+
+-- (4) Trigger analytics events like "changePage" and "gtmEvent". See https://www.guidedtrack.com/programs/8783/edit?line_number=67 (and maybe other places) for more info.
+
+-- (5) Check email address validity
+
+-- (6) Send data to Mailchimp & Beehiiv. Be sure to include UTM variables (e.g. utm_source, utm_medium, and utm_campaign) in request body. Also be sure to include any relevant interests, custom fields, tags, or other information.
+
+-- (7) Let the know if we were able to add them and/or if their report is on the way.
+
+-- Pitch types:
+-- (a) noReport = just a regular ask
+-- (b) noe = just a report, but *no* newsletter sign-up
+-- (c) alternateEmailSolicitation
+-- (d) getGoing_program
+-- (e) report = send a report (no separate variable; just noReport = 0)
+
+-- Remember to include page breaks (e.g., via invisible questions) if necessary to avoid re-running business logic on page refresh.
+
+-- Remember to honor legacy input variables and to return legacy output variables.
+
+-- The goal of this program is to combine the functionality of what were previously three separate programs. Thus this program basically needs to be able to handle (1) being run at the beginning *or* the end of a program, and (2) different kinds of pitches. However, it will *not* handle sending welcome emails to new subscribers — or at least it won't do so directly. That functionality is already implemented in a separate program; so if welcome emails need to be sent, then this program should invoke that one.
+
+--------------------------------------------------------------------------------
+-- Display the newsletter pitch
+--------------------------------------------------------------------------------
+
+*label: MailingListPitchLabel
+
+*if: skipEmailSolicitation = 1
+	*goto: MailingListUpdateLabel
+
+*if: theirEmail.size = 0
+	*if: invalidEmail = 1
+		>> warning_title = "Invalid email address"
+		>> warning_message = "Oops! It looks like that email address isn't valid. Please enter a valid email address (or leave the box blank if you'd prefer not to share your email address)."
+		*program: @jrc03c/show-warning
+
+	*if: headerBeforeEmailSolicitation
+		*header: {headerBeforeEmailSolicitation}
+
+	*if: textUnderMailImage
+		{textUnderMailImage}
+
+	*if: displayWhyEnterEmail = 1
+		*header: Why add your email? 💌
+
+		*list
+			Save your report for future reference.
+			Receive a comparison of your personalities if a friend you invite takes the test.
+
+	*question: {emailSolicitationQuestion}
+		*tip: {emailSolicitationTip}
+		*blank
+		*before: Email:
+		*default: theirEmail
+		*save: theirEmail
+
+--------------------------------------------------------------------------------
+-- If the user submitted their email address, then:
+-- (1) add them to the mailing list if they're not already in it, and...
+-- (2) update their profile with any relevant interests, tags, custom field
+--     values, etc.
+--------------------------------------------------------------------------------
+
+*label: MailingListUpdateLabel
+
+>> theirEmail = theirEmail.clean
+>> inputText = theirEmail
+
+*program: Simple check if email seems valid
+
+*if: invalidEmail = 1
+	*if: alreadyTriedValidatingEmailAddress = 0
+		>> alreadyTriedValidatingEmailAddress = 1
+		*goto: MailingListPitchLabel
+
+	*if: alreadyTriedValidatingEmailAddress = 1
+		*goto: MailingListEndLabel
+
+*if: shouldAddToMailingList = 0
+	*goto: MailingListEndLabel
+
+-- Send data to Mailchimp
+>> payload = {}
+>> payload["email_address"] = theirEmail
+>> payload["status_if_new"] = "subscribed"
+>> payload["status"] = "subscribed"
+>> payload["tags"] = []
+
+>> tag = {}
+>> tag["name"] = "Program Tried: {currentProgramName}"
+>> tag["status"] = "active"
+>> payload["tags"].add(tag)
+
+>> tag = {}
+>> tag["name"] = "utm_source={utm_source}"
+>> tag["status"] = "active"
+>> payload["tags"].add(tag)
+
+>> tag = {}
+>> tag["name"] = "utm_medium={utm_medium}"
+>> tag["status"] = "active"
+>> payload["tags"].add(tag)
+
+>> tag = {}
+>> tag["name"] = "utm_campaign={utm_campaign}"
+>> tag["status"] = "active"
+>> payload["tags"].add(tag)
+
+>> response = {}
+
+*service: mailchimp
+	*method: PUT
+	*path: /lists/{mailchimp_list_id}/members/{theirEmail}
+	*send: payload
+	*success
+		>> response = it
+		*if: "errors" in it
+			>> errors = 1
+	*error
+		>> response = it
+		>> errors = 1
+
+*if: errors = 1
+	>> html = ""
+	>> html = "{html}<details>"
+	>> html = "{html}<summary><b>MAILCHIMP REQUEST ERROR:</b></summary>"
+	>> html = "{html}<pre><code>{response.text}</code></pre>"
+	>> html = "{html}</details>"
+	>> error_message = html
+	*goto: MailingListErrorReportLabel
+
+*if: debug
+	>> html = ""
+	>> html = "{html}<details>"
+	>> html = "{html}<summary><b>MAILCHIMP RESPONSE:</b></summary>"
+	>> html = "{html}<pre><code>{response.text}</code></pre>"
+	>> html = "{html}</details>"
+	>> info_message = html
+	>> info_title = "{{ title }}"
+	*program: @jrc03c/show-info
+	*button: Continue
+
+-- Send data to Beehiiv using these steps:
+-- (1) Fetch the user's profile from Beehiiv, if it exists.
+-- (2) Extract the list of tools they've tried, if it exists.
+-- (3) Append this program's name to the list.
+-- (4) Send the updated list back to Beehiiv.
+>> email_address = theirEmail
+
+*program: @jrc03c/beehiiv/get-subscription
+
+*if: not beehiiv_subscription
+	>> errors = 1
+	>> html = "<p>The following errors occurred:</p>"
+
+	*for: i, response in service_responses
+		>> html = "{html}<details>"
+		>> html = "{html}<summary><b>SERVICE RESPONSE #{i}:</b></summary>"
+		>> html = "{html}<pre><code>{response.text}</code></pre>"
+		>> html = "{html}</details>"
+
+	>> error_message = html
+	*goto: MailingListErrorReportLabel
+
+>> tools_tried = []
+
+*if: "custom_fields" in beehiiv_subscription
+	*for: i, field in beehiiv_subscription["custom_fields"]
+		*if: field["name"] = "Tools Tried"
+			>> tools_tried = field["value"]
+
+*if: not (currentProgramName in tools_tried)
+	>> tools_tried.add(currentProgramName)
+
+>> bool_true = "true".decode("JSON")
+>> bool_false = "false".decode("JSON")
+>> payload = {}
+>> payload["utm_source"] = utm_source
+>> payload["utm_medium"] = utm_medium
+>> payload["utm_campaign"] = utm_campaign
+>> payload["custom_fields"] = []
+
+>> field = {}
+>> field["name"] = "Tools Tried"
+>> field["value"] = tools_tried
+>> payload["custom_fields"].add(field)
+
+>> email_address = beehiiv_subscription["email"]
+>> should_standardize_email_address = 0
+>> beehiiv_subscription = ""
+
+*program: @jrc03c/beehiiv/create-subscription
+
+*if: beehiiv_subscription = ""
+	>> errors = 1
+	>> html = "<p>The following errors occurred:</p>"
+
+	*for: i, response in service_responses
+		>> html = "{html}<details>"
+		>> html = "{html}<summary><b>SERVICE RESPONSE #{i}:</b></summary>"
+		>> html = "{html}<pre><code>{response.text}</code></pre>"
+		>> html = "{html}</details>"
+
+	>> error_message = html
+	*goto: MailingListErrorReportLabel
+
+*if: debug
+	>> html = ""
+
+	*for: i, response in service_responses
+		>> html = "{html}<details>"
+		>> html = "{html}<summary><b>SERVICE RESPONSE #{i}:</b></summary>"
+		>> html = "{html}<pre><code>{response.text}</code></pre>"
+		>> html = "{html}</details>"
+
+	>> info_message = html
+	>> info_title = "{{ title }}"
+	*program: @jrc03c/show-info
+	*button: Continue
+
+--------------------------------------------------------------------------------
+-- Send welcome emails to new subscribers
+--------------------------------------------------------------------------------
+
+*if: shouldSendWelcomeEmail = 1
+	*program: Clearer Thinking | Mailing List | Send Welcome Email
+
+--------------------------------------------------------------------------------
+-- Report errors
+--------------------------------------------------------------------------------
+
+*label: MailingListErrorReportLabel
+
+*if: errors = 1
+	>> warning_message = "Uh-oh! Something went wrong. 💥 Our developers have been notified and will hopefully fix the problem soon!"
+	>> warning_title = "Error"
+	*program: @jrc03c/show-warning
+
+	*if: debug
+		*program: @jrc03c/show-error
+
+	-- Send notification emails to interested parties
+	>> payload = {}
+	>> payload["to"] = error_notification_recipients
+	>> payload["subject"] = "{{ title }}"
+	>> payload["html"] = error_message
+	>> response = {}
+
+	*service: ct-programs-vercel-app
+		*method: POST
+		*path: /utils/send-email-via-mailgun
+		*send: payload
+		*success
+			>> response = it
+		*error
+			>> response = it
+
+	*if: debug
+		>> html = ""
+		>> html = "{html}<details>"
+		>> html = "{html}<summary><b>CT-PROGRAMS-VERCEL-APP RESPONSE:</b></summary>"
+		>> html = "{html}<pre><code>{response.text}</code></pre>"
+		>> html = "{html}</details>"
+		>> warning_message = html
+		>> warning_title = "{{ title }}"
+		*program: @jrc03c/show-warning
+		*button: Continue
+
+--------------------------------------------------------------------------------
+-- Clean up
+--------------------------------------------------------------------------------
+
+*label: MailingListEndLabel
+
+{{cleanup}}
+
+-- Andre_wait_experiment
+-- Error_Checking
+-- Error_Message
+-- Sorry_No_Add
+-- alreadyDeclinedBetaTesterInvite
+-- alternateEmailSolicitation
+-- brand_data
+-- brand_name
+-- brands
+-- currentProgramName
+-- dataToSend
+-- debug
+-- displayWhyEnterEmail
+-- doNotSendThanksForSubscribingMail
+-- do_not_display_report_is_being_sent
+-- emailQuestionTextShown
+-- email_data
+-- errorTextHash
+-- errors
+-- extraContentSentInEmail
+-- firstMatch
+-- from
+-- fullMessage
+-- fullSearchMembers
+-- getGoing_program
+-- headerBeforeEmailSolicitation
+-- html
+-- i
+-- inputText
+-- invalidEmail
+-- list
+-- list_name
+-- mailchimpMergeFieldsPOST
+-- mailchimpMergeFieldsPUT
+-- mailchimpTags
+-- member
+-- noReport
+-- noe
+-- quote
+-- saveToDashboard
+-- shownMessageToResubscribe
+-- skipEmailSolicitation
+-- subject
+-- subscriber_list_id
+-- tagName
+-- textUnderMailImage
+-- theirEmail
+-- theirEmailCharacters
+-- theirEmailCleaned
+-- topics
+-- triedEnteringEmailBefore
+-- updateDatabase
+-- userEmail
+-- userID
+-- userId
+-- userIsAlreadySubscribed
+-- userIsUnsubscribed
+-- userStatus
+-- user_gaveEmailAtStart
+-- user_theirEmailAtStart
+-- utm_campaign
+-- utm_medium
+-- utm_source

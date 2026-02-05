@@ -211,9 +211,8 @@ export class Parser {
             this.check(TokenType.INTERPOLATION_START)) {
             if (this.check(TokenType.INTERPOLATION_START)) {
                 this.advance(); // {
-                if (this.check(TokenType.IDENTIFIER)) {
-                    const id = this.advance();
-                    parts.push(createIdentifier(id.value, this.createLocFromToken(id)));
+                if (!this.check(TokenType.INTERPOLATION_END)) {
+                    parts.push(this.parseExpression());
                 }
                 if (this.check(TokenType.INTERPOLATION_END)) {
                     this.advance(); // }
