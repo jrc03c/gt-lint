@@ -94,6 +94,10 @@ export const noUnusedVars: LintRule = {
         } else if (expr.left.type === 'BinaryExpression' && expr.left.operator === ',') {
           collectForVars(expr.left, line, column);
         }
+      } else if (expr.type === 'BinaryExpression' && expr.operator === ',') {
+        // Comma-separated variables: collect from both sides
+        collectForVars(expr.left, line, column);
+        collectForVars(expr.right, line, column);
       } else if (expr.type === 'Identifier') {
         addDefinition(expr.name, line, column);
       }

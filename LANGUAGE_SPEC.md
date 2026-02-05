@@ -211,6 +211,9 @@ This text will be shown on the page.
 *for: item in collection
 	Process {item}
 
+*for: index, value in collection
+	Item {index} is {value}
+
 *repeat: 5
 	This runs 5 times
 ```

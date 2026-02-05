@@ -87,9 +87,13 @@ export const noUndefinedVars: LintRule = {
         if (expr.left.type === 'Identifier') {
           definedVars.add(expr.left.name);
         } else if (expr.left.type === 'BinaryExpression' && expr.left.operator === ',') {
-          // index, value pattern
+          // index, value pattern - collect from both sides of comma
           collectForVars(expr.left);
         }
+      } else if (expr.type === 'BinaryExpression' && expr.operator === ',') {
+        // Comma-separated variables: collect from both sides
+        collectForVars(expr.left);
+        collectForVars(expr.right);
       } else if (expr.type === 'Identifier') {
         definedVars.add(expr.name);
       }

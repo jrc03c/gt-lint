@@ -104,7 +104,7 @@ const KNOWN_LINTER_ISSUES: Record<string, string> = {
   // no-undefined-vars false positives (vars defined in ways our linter doesn't track)
   'component':                    'no-undefined-vars + valid-sub-keyword: component vars',
   'email':                        'no-undefined-vars: email template vars',
-  'for':                          'no-undefined-vars: for-loop iteration var',
+  'for':                          'no-undefined-vars: undefined collection var in snippet',
   'multiple_service_calls':       'no-undefined-vars: service response vars',
   'page_while_with_program':      'no-undefined-vars: program-scoped vars',
   'purchase_subscription':        'no-undefined-vars: purchase callback vars',

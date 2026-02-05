@@ -83,6 +83,22 @@ describe('Linter', () => {
       );
       expect(undefinedVarError).toBeUndefined();
     });
+
+    it('should not report error for index variable in *for: i, v in collection', () => {
+      const source = `>> x = ["a", "b", "c"]
+*for: i, v in x
+\tThe value of x at index {i} is {v}.`;
+      const result = lint(source);
+
+      const undefinedI = result.messages.find(m =>
+        m.ruleId === 'no-undefined-vars' && m.message.includes("'i'")
+      );
+      const undefinedV = result.messages.find(m =>
+        m.ruleId === 'no-undefined-vars' && m.message.includes("'v'")
+      );
+      expect(undefinedI).toBeUndefined();
+      expect(undefinedV).toBeUndefined();
+    });
   });
 
   describe('no-unused-vars rule', () => {
