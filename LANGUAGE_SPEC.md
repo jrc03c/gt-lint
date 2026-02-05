@@ -140,6 +140,40 @@ Hello, {name}! You are {age} years old.
 >> message = "The result is {x + y}"
 ```
 
+### Text Formatting
+
+Visible text can be formatted with **bold** and *italic* markers:
+
+**Bold text**: `*text*`
+```guidedtrack
+*Welcome!* to our program.
+*This is bold* and this is regular.
+```
+
+**Italic text**: `/text/`
+```guidedtrack
+/This is italicized!/ and this is regular.
+How /old/ are you?
+```
+
+**Context-aware formatting**: Formatting is only applied in visible text contexts. Keywords that accept URLs, paths, or technical values do NOT apply formatting:
+
+```guidedtrack
+-- Formatting ALLOWED (visible text):
+*question: How /old/ are you? *Please* answer honestly!
+*button: Click /here/ to *continue*!
+*header: /Welcome/ to our *awesome* program!
+
+-- Formatting NOT ALLOWED (URLs/paths/technical):
+*image: https://example.com/photo.jpg
+*audio: https://example.com/audio.mp3
+*video: https://youtube.com/watch?v=abc123
+*path: /api/v1/users/{id}/profile
+*goto: someLabel
+```
+
+Keywords with no formatting: `audio`, `video`, `image`, `path`, `goto`, `program`, `trigger`, `identifier`, `save`, `method`, `what`, `when`, `until`, `every`, `experiment`, `name`, `to`, `subject`, `type`, `data`, `xaxis`, `yaxis`, `icon`, `status`
+
 ### Identifiers
 
 Variable and label names:

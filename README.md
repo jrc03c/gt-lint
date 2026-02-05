@@ -84,6 +84,9 @@ GTLint provides a VSCode extension for an integrated development experience:
 
 1. Install the extension from the `vscode-extension/` directory
 2. Open any `.gt` file to see syntax highlighting
+   - Bold text (`*text*`) renders in bold
+   - Italic text (`/text/`) renders in italics
+   - Context-aware: formatting disabled in URL/path keywords
 3. Linting diagnostics appear automatically in the editor
 4. Errors and warnings are underlined in your code
 

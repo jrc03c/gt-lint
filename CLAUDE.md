@@ -48,6 +48,8 @@ The core infrastructure for GTLint is now in place:
 - Handles keywords, sub-keywords, operators, strings, numbers, comments
 - Tracks indentation (INDENT/DEDENT tokens) for Python-like syntax
 - Supports string interpolation with `{variable}` syntax
+- Supports text formatting: bold (`*text*`) and italic (`/text/`)
+- Context-aware formatting: URLs/paths in keywords like `*image:`, `*audio:`, `*path:` don't apply formatting
 
 ### Parser (`src/parser/`)
 - Converts token stream into an Abstract Syntax Tree (AST)
@@ -85,6 +87,10 @@ The core infrastructure for GTLint is now in place:
 
 ### VSCode Extension (`vscode-extension/`)
 - Syntax highlighting for `.gt` files
+  - Keywords, sub-keywords, operators, strings, numbers, comments
+  - Bold text formatting (`*text*`) rendered in bold
+  - Italic text formatting (`/text/`) rendered in italics
+  - Context-aware: formatting disabled for URL/path keywords
 - Integration with the linter (shows diagnostics in editor)
 - Language configuration (brackets, comments, auto-closing pairs)
 
@@ -100,6 +106,8 @@ The core infrastructure for GTLint is now in place:
 8. **No else clause**: GuidedTrack has no `*else:` keyword - use multiple `*if:` statements
 9. **Boolean values**: No `true`/`false` literals - use 1/0, `*set:`, or `"true".decode("JSON")`
 10. **`*program:` returns**: `*program:` calls a subprogram and returns (unlike `*goto:` which transfers control)
+11. **Text formatting**: Bold (`*text*`) and italic (`/text/`) formatting in visible text contexts only
+12. **Context-aware lexing**: Formatting markers are context-aware - disabled in URL/path keywords to avoid conflicts with file paths
 
 ## Reference Files
 
