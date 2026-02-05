@@ -137,3 +137,35 @@ The core infrastructure for GTLint is now in place:
 - Feel free to ask clarifying questions at any time.
 - Feel free to update this document as needed to record comments, questions, clarifications, design decisions, or anything else that seems important for you to be able to reference later. You're welcome, too, to rewrite anything I've already written in this document to make it clearer, better organized, etc.
 - The documentation website linked at the top of this document is quite large and sprawling, and I would recommend _not_ consulting it unless I'm unable to answer some specific question you might have. But between the sample programs, the `gt.pdf` file, the `LANGUAGE_SPEC.md`, and myself, I suspect that most of your questions about the language will be answerable without needing to consult the website.
+
+# Post-Change Checklist
+
+**After completing any feature, bug fix, or significant change, always perform these steps:**
+
+## 1. Update Documentation
+
+Review and update these Markdown files to ensure they reflect the changes:
+
+- `/CLAUDE.md` - Update "Current Project Status" section if features were added/changed
+- `/LANGUAGE_SPEC.md` - Update if language behavior or directives changed
+- `/README.md` - Update user-facing documentation (usage, rules, configuration, etc.)
+
+## 2. Bump Version and Rebuild
+
+Update the semantic version number in both package.json files and rebuild the VSCode extension:
+
+```bash
+# Version numbers are in:
+# - /package.json
+# - /vscode-extension/package.json
+
+# After updating versions, rebuild the .vsix file:
+cd vscode-extension && npm run package
+```
+
+**Version bump guidelines (semver):**
+- **Patch** (0.1.0 → 0.1.1): Bug fixes, minor improvements
+- **Minor** (0.1.0 → 0.2.0): New features, new rules, new directives
+- **Major** (0.1.0 → 1.0.0): Breaking changes, major rewrites
+
+The `.vsix` file will be created in the `vscode-extension/` directory.
