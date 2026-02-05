@@ -5,12 +5,15 @@
   "patterns": [
     { "include": "#comments" },
     { "include": "#expression-keywords" },
+    { "include": "#keywords-no-formatting" },
     { "include": "#keywords" },
+    { "include": "#sub-keywords-no-formatting" },
     { "include": "#sub-keywords" },
     { "include": "#expression-line" },
     { "include": "#label-definition" },
     { "include": "#strings" },
     { "include": "#bold-text" },
+    { "include": "#italic-text" },
     { "include": "#answer-options" },
     { "include": "#text-interpolation" }
   ],
@@ -41,6 +44,23 @@
         }
       ]
     },
+    "keywords-no-formatting": {
+      "patterns": [
+        {
+          "match": "^(\\t*)(\\*)(audio|video|image|goto|program|trigger):\\s*(.*)$",
+          "captures": {
+            "1": { "name": "punctuation.whitespace.guidedtrack" },
+            "2": { "name": "punctuation.definition.keyword.guidedtrack" },
+            "3": { "name": "keyword.control.guidedtrack" },
+            "4": {
+              "patterns": [
+                { "include": "#text-interpolation" }
+              ]
+            }
+          }
+        }
+      ]
+    },
     "keywords": {
       "match": "^(\\t*)(\\*)(audio|button|chart|clear|component|database|email|events|experiment|for|goto|group|header|html|if|image|label|list|login|maintain|navigation|page|points|program|progress|purchase|question|quit|randomize|repeat|return|service|set|settings|share|summary|switch|trigger|video|wait|while)\\b",
       "captures": {
@@ -48,6 +68,23 @@
         "2": { "name": "punctuation.definition.keyword.guidedtrack" },
         "3": { "name": "keyword.control.guidedtrack" }
       }
+    },
+    "sub-keywords-no-formatting": {
+      "patterns": [
+        {
+          "match": "^(\\t+)(\\*)(path|save|method|what|when|until|every|identifier|name|to|subject|type|data|xaxis|yaxis|icon|status):\\s*(.*)$",
+          "captures": {
+            "1": { "name": "punctuation.whitespace.guidedtrack" },
+            "2": { "name": "punctuation.definition.keyword.guidedtrack" },
+            "3": { "name": "keyword.other.sub-keyword.guidedtrack" },
+            "4": {
+              "patterns": [
+                { "include": "#text-interpolation" }
+              ]
+            }
+          }
+        }
+      ]
     },
     "sub-keywords": {
       "match": "^(\\t+)(\\*)(after|answers|before|blank|body|cancel|caption|classes|click|confirm|countdown|data|date|default|description|error|every|everytime|frequency|hide|icon|identifier|management|max|method|min|multiple|name|other|path|placeholder|required|reset|save|searchable|send|shuffle|start|startup|status|subject|success|tags|throwaway|time|tip|to|trendline|type|until|what|when|with|xaxis|yaxis)\\b",
@@ -106,6 +143,13 @@
       "match": "\\*[^*:]+\\*",
       "captures": {
         "0": { "name": "markup.bold.guidedtrack" }
+      }
+    },
+    "italic-text": {
+      "name": "markup.italic.guidedtrack",
+      "match": "/[^/]+/",
+      "captures": {
+        "0": { "name": "markup.italic.guidedtrack" }
       }
     },
     "string-interpolation": {

@@ -282,6 +282,10 @@ var Lexer = class {
       this.scanKeyword();
       return;
     }
+    if (ch === "/") {
+      this.scanItalic();
+      return;
+    }
     if (ch === '"') {
       this.scanString(ch);
       return;
@@ -394,15 +398,102 @@ var Lexer = class {
     if (hasColon) {
       this.skipSpaces();
       if (!this.isAtEnd() && this.peek() !== "\n" && this.peek() !== "\r") {
-        this.scanKeywordArgument();
+        this.scanKeywordArgument(name);
       }
     }
   }
-  scanKeywordArgument() {
+  scanItalic() {
+    const startLine = this.line;
+    const startCol = this.column;
+    const startOffset = this.pos;
+    this.advance();
+    let foundClosingSlash = false;
+    let tempPos = this.pos;
+    while (tempPos < this.source.length) {
+      const ch = this.source[tempPos];
+      if (ch === "\n" || ch === "\r")
+        break;
+      if (ch === "/") {
+        foundClosingSlash = true;
+        break;
+      }
+      tempPos++;
+    }
+    if (foundClosingSlash) {
+      let value = "/";
+      while (!this.isAtEnd() && this.peek() !== "/" && this.peek() !== "\n" && this.peek() !== "\r") {
+        const ch = this.peek();
+        if (ch === "{") {
+          if (value.length > 1) {
+            this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
+            value = "";
+          }
+          this.scanInterpolation();
+          if (!this.isAtEnd() && this.peek() !== "/" && this.peek() !== "\n" && this.peek() !== "\r") {
+            const newStartLine = this.line;
+            const newStartCol = this.column;
+            const newStartOffset = this.pos;
+            value = "";
+            while (!this.isAtEnd() && this.peek() !== "/" && this.peek() !== "{" && this.peek() !== "\n" && this.peek() !== "\r") {
+              value += this.peek();
+              this.advance();
+            }
+            if (value) {
+              this.tokens.push(createToken(TokenType.TEXT, value, newStartLine, newStartCol, newStartOffset, this.line, this.column, this.pos));
+            }
+          }
+          continue;
+        }
+        value += ch;
+        this.advance();
+      }
+      if (value.length > 1 || value.length === 1 && value !== "/") {
+        this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
+      }
+      if (!this.isAtEnd() && this.peek() === "/") {
+        this.tokens.push(createToken(TokenType.TEXT, "/", this.line, this.column, this.pos, this.line, this.column + 1, this.pos + 1));
+        this.advance();
+      }
+      if (!this.isAtEnd() && this.peek() !== "\n" && this.peek() !== "\r") {
+        this.scanText();
+      }
+      return;
+    }
+    this.scanText();
+  }
+  scanKeywordArgument(keywordName) {
     const startLine = this.line;
     const startCol = this.column;
     const startOffset = this.pos;
     let value = "";
+    const noFormattingKeywords = /* @__PURE__ */ new Set([
+      "audio",
+      "video",
+      "image",
+      "path",
+      "goto",
+      "program",
+      "label",
+      "trigger",
+      "identifier",
+      "save",
+      "method",
+      "what",
+      "when",
+      "until",
+      "every",
+      "experiment",
+      "name",
+      "to",
+      "subject",
+      "type",
+      "data",
+      "xaxis",
+      "yaxis",
+      "icon",
+      "status"
+    ]);
+    const allowFormatting = !noFormattingKeywords.has(keywordName);
     while (!this.isAtEnd() && this.peek() !== "\n" && this.peek() !== "\r") {
       const ch = this.peek();
       if (ch === "{") {
@@ -412,6 +503,50 @@ var Lexer = class {
         }
         this.scanInterpolation();
         continue;
+      }
+      if (allowFormatting && ch === "*" && this.peekNext() !== " ") {
+        let tempPos = this.pos + 1;
+        let foundClosingAsterisk = false;
+        while (tempPos < this.source.length) {
+          const tempCh = this.source[tempPos];
+          if (tempCh === "\n" || tempCh === "\r")
+            break;
+          if (tempCh === "*") {
+            foundClosingAsterisk = true;
+            break;
+          }
+          tempPos++;
+        }
+        if (foundClosingAsterisk) {
+          if (value.trim()) {
+            this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
+            value = "";
+          }
+          this.scanKeyword();
+          continue;
+        }
+      }
+      if (allowFormatting && ch === "/") {
+        let tempPos = this.pos + 1;
+        let foundClosingSlash = false;
+        while (tempPos < this.source.length) {
+          const tempCh = this.source[tempPos];
+          if (tempCh === "\n" || tempCh === "\r")
+            break;
+          if (tempCh === "/") {
+            foundClosingSlash = true;
+            break;
+          }
+          tempPos++;
+        }
+        if (foundClosingSlash) {
+          if (value.trim()) {
+            this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
+            value = "";
+          }
+          this.scanItalic();
+          continue;
+        }
       }
       value += ch;
       this.advance();

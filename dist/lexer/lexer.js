@@ -87,6 +87,11 @@ export class Lexer {
             this.scanKeyword();
             return;
         }
+        // Italic text starting with /
+        if (ch === '/') {
+            this.scanItalic();
+            return;
+        }
         // Strings (in text context, strings are part of text content)
         if (ch === '"') {
             this.scanString(ch);
@@ -218,18 +223,96 @@ export class Lexer {
         if (hasColon) {
             this.skipSpaces();
             if (!this.isAtEnd() && this.peek() !== '\n' && this.peek() !== '\r') {
-                this.scanKeywordArgument();
+                this.scanKeywordArgument(name);
             }
         }
     }
-    scanKeywordArgument() {
+    scanItalic() {
+        const startLine = this.line;
+        const startCol = this.column;
+        const startOffset = this.pos;
+        this.advance(); // consume /
+        // Check if this might be italic text (/text/)
+        // Look ahead to see if we find another / on this line
+        let foundClosingSlash = false;
+        let tempPos = this.pos;
+        while (tempPos < this.source.length) {
+            const ch = this.source[tempPos];
+            if (ch === '\n' || ch === '\r')
+                break;
+            if (ch === '/') {
+                foundClosingSlash = true;
+                break;
+            }
+            tempPos++;
+        }
+        // If we found a closing /, this is italic text
+        if (foundClosingSlash) {
+            // Scan as text with italic formatting
+            let value = '/';
+            while (!this.isAtEnd() && this.peek() !== '/' && this.peek() !== '\n' && this.peek() !== '\r') {
+                const ch = this.peek();
+                // Handle interpolation within italic text
+                if (ch === '{') {
+                    if (value.length > 1) { // more than just the opening /
+                        this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
+                        value = '';
+                    }
+                    this.scanInterpolation();
+                    // After interpolation, start collecting text again
+                    if (!this.isAtEnd() && this.peek() !== '/' && this.peek() !== '\n' && this.peek() !== '\r') {
+                        const newStartLine = this.line;
+                        const newStartCol = this.column;
+                        const newStartOffset = this.pos;
+                        value = '';
+                        while (!this.isAtEnd() && this.peek() !== '/' && this.peek() !== '{' && this.peek() !== '\n' && this.peek() !== '\r') {
+                            value += this.peek();
+                            this.advance();
+                        }
+                        if (value) {
+                            this.tokens.push(createToken(TokenType.TEXT, value, newStartLine, newStartCol, newStartOffset, this.line, this.column, this.pos));
+                        }
+                    }
+                    continue;
+                }
+                value += ch;
+                this.advance();
+            }
+            // Add the text before the closing /
+            if (value.length > 1 || (value.length === 1 && value !== '/')) {
+                this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
+            }
+            // Consume the closing /
+            if (!this.isAtEnd() && this.peek() === '/') {
+                this.tokens.push(createToken(TokenType.TEXT, '/', this.line, this.column, this.pos, this.line, this.column + 1, this.pos + 1));
+                this.advance();
+            }
+            // Continue scanning the rest of the line as text
+            if (!this.isAtEnd() && this.peek() !== '\n' && this.peek() !== '\r') {
+                this.scanText();
+            }
+            return;
+        }
+        // Otherwise, it's just a regular / character in text, treat as text
+        this.scanText();
+    }
+    scanKeywordArgument(keywordName) {
         const startLine = this.line;
         const startCol = this.column;
         const startOffset = this.pos;
         let value = '';
+        // Keywords that accept URLs, paths, or other technical values
+        // These should NOT allow text formatting (bold/italic)
+        const noFormattingKeywords = new Set([
+            'audio', 'video', 'image', 'path', 'goto', 'program', 'label',
+            'trigger', 'identifier', 'save', 'method', 'what', 'when', 'until',
+            'every', 'experiment', 'name', 'to', 'subject', 'type', 'data',
+            'xaxis', 'yaxis', 'icon', 'status'
+        ]);
+        const allowFormatting = !noFormattingKeywords.has(keywordName);
         while (!this.isAtEnd() && this.peek() !== '\n' && this.peek() !== '\r') {
             const ch = this.peek();
-            // Handle interpolation
+            // Handle interpolation (always supported)
             if (ch === '{') {
                 if (value.trim()) {
                     this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
@@ -237,6 +320,58 @@ export class Lexer {
                 }
                 this.scanInterpolation();
                 continue;
+            }
+            // Handle bold text if formatting is allowed
+            if (allowFormatting && ch === '*' && this.peekNext() !== ' ') {
+                // Check if this is bold text
+                let tempPos = this.pos + 1;
+                let foundClosingAsterisk = false;
+                while (tempPos < this.source.length) {
+                    const tempCh = this.source[tempPos];
+                    if (tempCh === '\n' || tempCh === '\r')
+                        break;
+                    if (tempCh === '*') {
+                        foundClosingAsterisk = true;
+                        break;
+                    }
+                    tempPos++;
+                }
+                if (foundClosingAsterisk) {
+                    // Save current text
+                    if (value.trim()) {
+                        this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
+                        value = '';
+                    }
+                    // Scan bold text by calling the main scanToken which will detect it
+                    this.scanKeyword();
+                    continue;
+                }
+            }
+            // Handle italic text if formatting is allowed
+            if (allowFormatting && ch === '/') {
+                // Check if this is italic text
+                let tempPos = this.pos + 1;
+                let foundClosingSlash = false;
+                while (tempPos < this.source.length) {
+                    const tempCh = this.source[tempPos];
+                    if (tempCh === '\n' || tempCh === '\r')
+                        break;
+                    if (tempCh === '/') {
+                        foundClosingSlash = true;
+                        break;
+                    }
+                    tempPos++;
+                }
+                if (foundClosingSlash) {
+                    // Save current text
+                    if (value.trim()) {
+                        this.tokens.push(createToken(TokenType.TEXT, value, startLine, startCol, startOffset, this.line, this.column, this.pos));
+                        value = '';
+                    }
+                    // Scan italic text by calling scanItalic
+                    this.scanItalic();
+                    continue;
+                }
             }
             value += ch;
             this.advance();

@@ -12,6 +12,7 @@ export declare class Lexer {
     private scanToken;
     private handleIndentation;
     private scanKeyword;
+    private scanItalic;
     private scanKeywordArgument;
     private scanExpression;
     private scanComment;
