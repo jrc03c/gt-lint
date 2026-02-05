@@ -86,6 +86,10 @@
 -- @to-child: error_is_fatal, error_title, error_message
 -- @to-parent: beehiiv_subscription
 
+-- gtformat-disable
+{{ something }}
+-- gtformat-enable
+
 >> true = "true".decode("JSON")
 >> false = "false".decode("JSON")
 >> error_title = "@jrc03c/beehiiv/create-subscription"

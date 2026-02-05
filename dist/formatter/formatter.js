@@ -1,4 +1,5 @@
 import { DEFAULT_FORMATTER_CONFIG } from '../types.js';
+import { parseDirectives, isFormatDisabled } from '../linter/directives.js';
 export class Formatter {
     config;
     constructor(config = {}) {
@@ -13,8 +14,26 @@ export class Formatter {
         let previousLineWasBlank = false;
         let previousLineWasTopLevel = false;
         let consecutiveBlankLines = 0;
+        // Parse directives to respect gtformat-disable regions
+        const directives = parseDirectives(source);
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
+            const lineNum = i + 1; // 1-indexed
+            // Skip formatting if this line is in a disabled region
+            if (isFormatDisabled(directives, lineNum)) {
+                formattedLines.push(line);
+                // Update state tracking for blank line handling
+                const isBlank = line.trim() === '';
+                if (isBlank) {
+                    consecutiveBlankLines++;
+                }
+                else {
+                    consecutiveBlankLines = 0;
+                }
+                previousLineWasBlank = isBlank;
+                previousLineWasTopLevel = !isBlank && !line.startsWith('\t');
+                continue;
+            }
             // Trim trailing whitespace
             if (this.config.trimTrailingWhitespace) {
                 line = line.replace(/[ \t]+$/, '');
@@ -88,6 +107,11 @@ export class Formatter {
     formatExpression(content) {
         // Simple formatting for expressions
         let result = content;
+        // First, normalize whitespace (collapse multiple spaces to one)
+        // But preserve the >> prefix
+        const prefix = '>> ';
+        const expressionPart = result.slice(prefix.length);
+        result = prefix + this.normalizeWhitespace(expressionPart).trim();
         // Space around operators
         if (this.config.spaceAroundOperators) {
             // Comparison, arithmetic, and assignment (but not in strings)

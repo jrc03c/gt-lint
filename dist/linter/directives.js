@@ -1,13 +1,27 @@
 /**
- * Parses and tracks linter directives from comments.
+ * Parses and tracks linter and formatter directives from comments.
  *
  * Supported directives:
- * - `-- gtlint-disable` - Disable all rules until re-enabled
- * - `-- gtlint-disable rule1, rule2` - Disable specific rules
- * - `-- gtlint-enable` - Re-enable all rules
- * - `-- gtlint-enable rule1` - Re-enable specific rule
- * - `-- gtlint-disable-next-line` - Disable all rules for next line
- * - `-- gtlint-disable-next-line rule1, rule2` - Disable specific rules for next line
+ *
+ * Combined (affects both linting and formatting):
+ * - `-- gt-disable` - Disable both lint and format until `gt-enable` or EOF
+ * - `-- gt-enable` - Re-enable both lint and format
+ * - `-- gt-disable-next-line` - Disable both lint and format for next line only
+ * - `-- gt-disable-next-line rule1, rule2` - Disable specific lint rules and format for next line
+ *
+ * Lint-only:
+ * - `-- gtlint-disable` - Disable all lint rules until `gtlint-enable` or EOF
+ * - `-- gtlint-disable rule1, rule2` - Disable specific lint rules
+ * - `-- gtlint-enable` - Re-enable all lint rules
+ * - `-- gtlint-enable rule1` - Re-enable specific lint rule
+ * - `-- gtlint-disable-next-line` - Disable all lint rules for next line
+ * - `-- gtlint-disable-next-line rule1, rule2` - Disable specific lint rules for next line
+ *
+ * Format-only:
+ * - `-- gtformat-disable` - Disable formatting until `gtformat-enable` or EOF
+ * - `-- gtformat-enable` - Re-enable formatting
+ *
+ * Variable tracking:
  * - `-- @from-parent: var1, var2` - Variables received from parent program (suppresses no-undefined-vars)
  * - `-- @from-child: var1, var2` - Variables received from child program (suppresses no-undefined-vars)
  * - `-- @to-parent: var1, var2` - Variables sent to parent program (suppresses no-unused-vars)
@@ -16,7 +30,8 @@
 export function parseDirectives(source) {
     const lines = source.split('\n');
     const state = {
-        disabledLines: new Map(),
+        lintDisabledLines: new Map(),
+        formatDisabledLines: new Set(),
         fromParentVars: new Set(),
         fromChildVars: new Set(),
         toParentVars: new Set(),
@@ -24,44 +39,114 @@ export function parseDirectives(source) {
     };
     // Track active disable regions
     // Key: 'all' or rule name, Value: start line
-    const activeDisables = new Map();
+    const activeLintDisables = new Map();
+    // For format: just track start line (no rule granularity)
+    let formatDisableStart = null;
     // Track next-line disables
-    let nextLineDisable = null;
+    let nextLineLintDisable = null;
+    let nextLineFormatDisable = false;
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const lineNum = i + 1; // 1-indexed
-        // Apply next-line disable from previous line
-        if (nextLineDisable !== null) {
-            state.disabledLines.set(lineNum, nextLineDisable);
-            nextLineDisable = null;
+        // Apply next-line disables from previous line
+        if (nextLineLintDisable !== null) {
+            state.lintDisabledLines.set(lineNum, nextLineLintDisable);
+            nextLineLintDisable = null;
+        }
+        if (nextLineFormatDisable) {
+            state.formatDisabledLines.add(lineNum);
+            nextLineFormatDisable = false;
         }
         // Check for comment directives
         const commentMatch = line.match(/^\s*--\s*(.+)$/);
         if (!commentMatch)
             continue;
         const commentContent = commentMatch[1].trim();
+        // Parse gt-disable-next-line (combined lint + format)
+        if (commentContent.startsWith('gt-disable-next-line')) {
+            const rulesStr = commentContent.slice('gt-disable-next-line'.length).trim();
+            if (rulesStr) {
+                nextLineLintDisable = parseRuleList(rulesStr);
+            }
+            else {
+                nextLineLintDisable = 'all';
+            }
+            nextLineFormatDisable = true;
+            continue;
+        }
+        // Parse gt-disable (combined lint + format)
+        if (commentContent.startsWith('gt-disable') && !commentContent.startsWith('gt-disable-next-line')) {
+            const rulesStr = commentContent.slice('gt-disable'.length).trim();
+            if (rulesStr) {
+                const rules = parseRuleList(rulesStr);
+                for (const rule of rules) {
+                    activeLintDisables.set(rule, lineNum);
+                }
+            }
+            else {
+                activeLintDisables.set('all', lineNum);
+            }
+            // Also disable format
+            if (formatDisableStart === null) {
+                formatDisableStart = lineNum;
+            }
+            continue;
+        }
+        // Parse gt-enable (combined lint + format)
+        if (commentContent.startsWith('gt-enable')) {
+            const rulesStr = commentContent.slice('gt-enable'.length).trim();
+            if (rulesStr) {
+                // Re-enable specific lint rules
+                const rules = parseRuleList(rulesStr);
+                for (const rule of rules) {
+                    const startLine = activeLintDisables.get(rule);
+                    if (startLine !== undefined) {
+                        addLintDisabledRegion(state, startLine, lineNum - 1, new Set([rule]));
+                        activeLintDisables.delete(rule);
+                    }
+                }
+            }
+            else {
+                // Re-enable all lint rules
+                for (const [key, startLine] of activeLintDisables) {
+                    if (key === 'all') {
+                        addLintDisabledRegion(state, startLine, lineNum - 1, 'all');
+                    }
+                    else {
+                        addLintDisabledRegion(state, startLine, lineNum - 1, new Set([key]));
+                    }
+                }
+                activeLintDisables.clear();
+            }
+            // Also re-enable format
+            if (formatDisableStart !== null) {
+                addFormatDisabledRegion(state, formatDisableStart, lineNum - 1);
+                formatDisableStart = null;
+            }
+            continue;
+        }
         // Parse gtlint-disable-next-line
         if (commentContent.startsWith('gtlint-disable-next-line')) {
             const rulesStr = commentContent.slice('gtlint-disable-next-line'.length).trim();
             if (rulesStr) {
-                nextLineDisable = parseRuleList(rulesStr);
+                nextLineLintDisable = parseRuleList(rulesStr);
             }
             else {
-                nextLineDisable = 'all';
+                nextLineLintDisable = 'all';
             }
             continue;
         }
         // Parse gtlint-disable
-        if (commentContent.startsWith('gtlint-disable')) {
+        if (commentContent.startsWith('gtlint-disable') && !commentContent.startsWith('gtlint-disable-next-line')) {
             const rulesStr = commentContent.slice('gtlint-disable'.length).trim();
             if (rulesStr) {
                 const rules = parseRuleList(rulesStr);
                 for (const rule of rules) {
-                    activeDisables.set(rule, lineNum);
+                    activeLintDisables.set(rule, lineNum);
                 }
             }
             else {
-                activeDisables.set('all', lineNum);
+                activeLintDisables.set('all', lineNum);
             }
             continue;
         }
@@ -72,25 +157,40 @@ export function parseDirectives(source) {
                 // Re-enable specific rules
                 const rules = parseRuleList(rulesStr);
                 for (const rule of rules) {
-                    const startLine = activeDisables.get(rule);
+                    const startLine = activeLintDisables.get(rule);
                     if (startLine !== undefined) {
                         // Mark all lines in the region as disabled for this rule
-                        addDisabledRegion(state, startLine, lineNum - 1, new Set([rule]));
-                        activeDisables.delete(rule);
+                        addLintDisabledRegion(state, startLine, lineNum - 1, new Set([rule]));
+                        activeLintDisables.delete(rule);
                     }
                 }
             }
             else {
                 // Re-enable all rules
-                for (const [key, startLine] of activeDisables) {
+                for (const [key, startLine] of activeLintDisables) {
                     if (key === 'all') {
-                        addDisabledRegion(state, startLine, lineNum - 1, 'all');
+                        addLintDisabledRegion(state, startLine, lineNum - 1, 'all');
                     }
                     else {
-                        addDisabledRegion(state, startLine, lineNum - 1, new Set([key]));
+                        addLintDisabledRegion(state, startLine, lineNum - 1, new Set([key]));
                     }
                 }
-                activeDisables.clear();
+                activeLintDisables.clear();
+            }
+            continue;
+        }
+        // Parse gtformat-disable
+        if (commentContent.startsWith('gtformat-disable') && !commentContent.startsWith('gtformat-disable-next-line')) {
+            if (formatDisableStart === null) {
+                formatDisableStart = lineNum;
+            }
+            continue;
+        }
+        // Parse gtformat-enable
+        if (commentContent.startsWith('gtformat-enable')) {
+            if (formatDisableStart !== null) {
+                addFormatDisabledRegion(state, formatDisableStart, lineNum - 1);
+                formatDisableStart = null;
             }
             continue;
         }
@@ -133,13 +233,16 @@ export function parseDirectives(source) {
     }
     // Handle any unclosed disable regions (extend to end of file)
     const totalLines = lines.length;
-    for (const [key, startLine] of activeDisables) {
+    for (const [key, startLine] of activeLintDisables) {
         if (key === 'all') {
-            addDisabledRegion(state, startLine, totalLines, 'all');
+            addLintDisabledRegion(state, startLine, totalLines, 'all');
         }
         else {
-            addDisabledRegion(state, startLine, totalLines, new Set([key]));
+            addLintDisabledRegion(state, startLine, totalLines, new Set([key]));
         }
+    }
+    if (formatDisableStart !== null) {
+        addFormatDisabledRegion(state, formatDisableStart, totalLines);
     }
     return state;
 }
@@ -153,11 +256,11 @@ function parseVarList(str) {
         .map(s => s.trim())
         .filter(s => s.length > 0);
 }
-function addDisabledRegion(state, startLine, endLine, rules) {
+function addLintDisabledRegion(state, startLine, endLine, rules) {
     for (let line = startLine; line <= endLine; line++) {
-        const existing = state.disabledLines.get(line);
+        const existing = state.lintDisabledLines.get(line);
         if (rules === 'all') {
-            state.disabledLines.set(line, 'all');
+            state.lintDisabledLines.set(line, 'all');
         }
         else if (existing === 'all') {
             // Already all disabled, keep it
@@ -169,20 +272,31 @@ function addDisabledRegion(state, startLine, endLine, rules) {
             }
         }
         else {
-            state.disabledLines.set(line, new Set(rules));
+            state.lintDisabledLines.set(line, new Set(rules));
         }
     }
 }
+function addFormatDisabledRegion(state, startLine, endLine) {
+    for (let line = startLine; line <= endLine; line++) {
+        state.formatDisabledLines.add(line);
+    }
+}
 /**
- * Check if a rule is disabled at a given line.
+ * Check if a lint rule is disabled at a given line.
  */
 export function isRuleDisabled(state, line, ruleId) {
-    const disabled = state.disabledLines.get(line);
+    const disabled = state.lintDisabledLines.get(line);
     if (!disabled)
         return false;
     if (disabled === 'all')
         return true;
     return disabled.has(ruleId);
+}
+/**
+ * Check if formatting is disabled at a given line.
+ */
+export function isFormatDisabled(state, line) {
+    return state.formatDisabledLines.has(line);
 }
 /**
  * Check if a variable is received from parent program.

@@ -1453,7 +1453,12 @@ var DEFAULT_LINTER_CONFIG = {
     "no-unclosed-string": "error",
     "no-unclosed-bracket": "error",
     "no-single-quotes": "error",
-    "no-unreachable-code": "warn"
+    "no-unreachable-code": "warn",
+    "required-subkeywords": "error",
+    "valid-subkeyword-value": "error",
+    "no-inline-argument": "error",
+    "goto-needs-reset-in-events": "warn",
+    "purchase-subkeyword-constraints": "error"
   },
   format: DEFAULT_FORMATTER_CONFIG,
   ignore: ["**/node_modules/**", "**/dist/**"]
@@ -2461,6 +2466,1025 @@ var noUnreachableCode = {
   }
 };
 
+// ../dist/language/keyword-spec.js
+var KEYWORD_SPECS = {
+  // ---------------------------------------------------------------------------
+  // Media Keywords
+  // ---------------------------------------------------------------------------
+  audio: {
+    description: "Embeds an audio file into the page",
+    argument: { required: true, type: "url" },
+    body: { allowed: true, required: false },
+    subKeywords: {
+      start: {
+        required: false,
+        valueType: "yes-no",
+        description: "Whether the audio auto-plays (default: no)"
+      },
+      hide: {
+        required: false,
+        valueType: "yes-no",
+        description: "Whether the player controls are hidden (default: yes)"
+      }
+    }
+  },
+  image: {
+    description: "Inserts an image into the page",
+    argument: { required: true, type: "url" },
+    body: { allowed: true, required: false },
+    subKeywords: {
+      caption: {
+        required: false,
+        valueType: "text",
+        description: "Description displayed beneath the image"
+      },
+      description: {
+        required: false,
+        valueType: "text",
+        description: "Alt text if the image fails to load"
+      }
+    }
+  },
+  video: {
+    description: "Embeds a YouTube video into the page",
+    argument: { required: true, type: "url" },
+    body: { allowed: false, required: false }
+  },
+  // ---------------------------------------------------------------------------
+  // UI Keywords
+  // ---------------------------------------------------------------------------
+  button: {
+    description: "Puts a button with specific text on the page",
+    argument: { required: true, type: "text" },
+    body: { allowed: false, required: false }
+  },
+  chart: {
+    description: "Displays a chart",
+    argument: { required: true, type: "text" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      type: {
+        required: true,
+        valueType: "enum",
+        enumValues: ["bar", "line", "scatter"],
+        description: "The type of chart"
+      },
+      data: {
+        required: true,
+        valueType: "collection",
+        description: "The data to display (collection of collections)"
+      },
+      xaxis: {
+        required: false,
+        valueType: "none",
+        hasBody: true,
+        description: "X-axis configuration (requires *min and *max)"
+      },
+      yaxis: {
+        required: false,
+        valueType: "none",
+        hasBody: true,
+        description: "Y-axis configuration (requires *min and *max)"
+      },
+      trendline: {
+        required: false,
+        valueType: "none",
+        description: "Draws a trend-line in scatter charts"
+      },
+      min: {
+        required: false,
+        valueType: "number",
+        description: "Minimum value for axis"
+      },
+      max: {
+        required: false,
+        valueType: "number",
+        description: "Maximum value for axis"
+      }
+    },
+    requiredSubKeywords: ["type", "data"]
+  },
+  clear: {
+    description: "Clears text kept on the page by *maintain",
+    argument: { required: false, type: "none" },
+    body: { allowed: false, required: false }
+  },
+  component: {
+    description: "Displays a bordered content box",
+    argument: { required: false, type: "none" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      classes: {
+        required: false,
+        valueType: "text",
+        description: "CSS class names to apply"
+      },
+      click: {
+        required: false,
+        valueType: "none",
+        hasBody: true,
+        description: "Code to run when component is clicked"
+      },
+      with: {
+        required: false,
+        valueType: "expression",
+        description: "Local variable for click handler context"
+      },
+      header: {
+        required: false,
+        valueType: "text",
+        description: "Header text for the component"
+      }
+    }
+  },
+  html: {
+    description: "Inserts arbitrary HTML code into the page",
+    argument: { required: false, type: "none" },
+    body: { allowed: true, required: true }
+  },
+  list: {
+    description: "Inserts a list into the page",
+    argument: {
+      required: false,
+      type: "enum",
+      enumValues: ["ordered", "expandable"]
+    },
+    body: { allowed: true, required: true }
+  },
+  maintain: {
+    description: "Keeps text in a gray box at the top of the page",
+    argument: { required: true, type: "text" },
+    body: { allowed: false, required: false }
+  },
+  navigation: {
+    description: "Creates a navigation bar",
+    argument: { required: false, type: "none" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      name: {
+        required: false,
+        valueType: "text",
+        description: "Name for the navbar (highly recommended)"
+      },
+      icon: {
+        required: false,
+        valueType: "text",
+        description: "Font Awesome icon class"
+      }
+    }
+  },
+  page: {
+    description: "Creates a page of content",
+    argument: { required: false, type: "none" },
+    body: { allowed: true, required: true }
+  },
+  progress: {
+    description: "Displays a progress bar",
+    argument: { required: true, type: "percent" },
+    body: { allowed: false, required: false }
+  },
+  share: {
+    description: "Inserts a Facebook share button",
+    argument: { required: false, type: "none" },
+    body: { allowed: false, required: false }
+  },
+  // ---------------------------------------------------------------------------
+  // Question Keywords
+  // ---------------------------------------------------------------------------
+  question: {
+    description: "Asks a question",
+    argument: { required: true, type: "text" },
+    body: { allowed: true, required: false },
+    subKeywords: {
+      type: {
+        required: false,
+        valueType: "enum",
+        enumValues: [
+          "calendar",
+          "checkbox",
+          "choice",
+          "number",
+          "paragraph",
+          "ranking",
+          "slider",
+          "text"
+        ],
+        description: "The type of question"
+      },
+      shuffle: {
+        required: false,
+        valueType: "none",
+        description: "Randomize answer order"
+      },
+      save: {
+        required: false,
+        valueType: "text",
+        description: "Variable name to save response"
+      },
+      tip: {
+        required: false,
+        valueType: "text",
+        description: "Hint text displayed under the question"
+      },
+      confirm: {
+        required: false,
+        valueType: "none",
+        description: "Require clicking Next after selection"
+      },
+      searchable: {
+        required: false,
+        valueType: "none",
+        description: "Enable type-ahead search for answers"
+      },
+      throwaway: {
+        required: false,
+        valueType: "none",
+        description: "Exclude from CSV data"
+      },
+      countdown: {
+        required: false,
+        valueType: "duration",
+        description: "Time limit for answering"
+      },
+      tags: {
+        required: false,
+        valueType: "text",
+        description: "Tags for grouping questions"
+      },
+      answers: {
+        required: false,
+        valueType: "collection",
+        description: "Answer options from a collection"
+      },
+      blank: {
+        required: false,
+        valueType: "none",
+        description: "Allow skipping the question"
+      },
+      multiple: {
+        required: false,
+        valueType: "none",
+        description: "Allow multiple text answers"
+      },
+      default: {
+        required: false,
+        valueType: "expression",
+        description: "Default/pre-selected answer(s)"
+      },
+      before: {
+        required: false,
+        valueType: "text",
+        description: "Text to the left of input box"
+      },
+      after: {
+        required: false,
+        valueType: "text",
+        description: "Text to the right of input box"
+      },
+      min: {
+        required: false,
+        valueType: "number",
+        description: "Minimum value for slider"
+      },
+      max: {
+        required: false,
+        valueType: "number",
+        description: "Maximum value for slider"
+      },
+      time: {
+        required: false,
+        valueType: "yes-no",
+        description: "Allow time selection in calendar"
+      },
+      date: {
+        required: false,
+        valueType: "yes-no",
+        description: "Allow date selection in calendar"
+      },
+      placeholder: {
+        required: false,
+        valueType: "text",
+        description: "Placeholder text in input field"
+      },
+      other: {
+        required: false,
+        valueType: "none",
+        description: 'Allow "other" free-text option'
+      },
+      icon: {
+        required: false,
+        valueType: "text",
+        description: "Font Awesome icon for answer option"
+      },
+      image: {
+        required: false,
+        valueType: "url",
+        description: "Image for answer option"
+      }
+    }
+  },
+  // ---------------------------------------------------------------------------
+  // Control Flow Keywords
+  // ---------------------------------------------------------------------------
+  if: {
+    description: "Runs a block of code if condition is true",
+    argument: { required: true, type: "expression" },
+    body: { allowed: true, required: true }
+  },
+  for: {
+    description: "Loops through elements of a collection, association, or string",
+    argument: { required: true, type: "iteration" },
+    body: { allowed: true, required: true }
+  },
+  while: {
+    description: "Runs a block of code while condition is true",
+    argument: { required: true, type: "expression" },
+    body: { allowed: true, required: true }
+  },
+  repeat: {
+    description: "Repeats a block of code a specified number of times",
+    argument: { required: true, type: "number" },
+    body: { allowed: true, required: true }
+  },
+  goto: {
+    description: "Jumps to a specific label",
+    argument: { required: true, type: "label" },
+    body: { allowed: true, required: false },
+    subKeywords: {
+      reset: {
+        required: false,
+        valueType: "none",
+        description: "Resets the navigation stack (required in *events)"
+      }
+    }
+  },
+  label: {
+    description: "Declares a named location in the code",
+    argument: { required: true, type: "label" },
+    body: { allowed: false, required: false }
+  },
+  wait: {
+    description: "Pauses execution",
+    argument: {
+      required: false,
+      type: "duration"
+    },
+    body: { allowed: false, required: false }
+  },
+  quit: {
+    description: "Ends the entire program immediately",
+    argument: { required: false, type: "none" },
+    body: { allowed: false, required: false }
+  },
+  return: {
+    description: "Ends the current subprogram and returns to parent",
+    argument: { required: false, type: "none" },
+    body: { allowed: false, required: false }
+  },
+  // ---------------------------------------------------------------------------
+  // Randomization Keywords
+  // ---------------------------------------------------------------------------
+  randomize: {
+    description: "Randomly selects blocks of code to run",
+    argument: { required: false, type: "number" },
+    // Can also be "all"
+    body: { allowed: true, required: true },
+    subKeywords: {
+      everytime: {
+        required: false,
+        valueType: "none",
+        description: "Re-randomize every time user passes this point"
+      },
+      name: {
+        required: false,
+        valueType: "text",
+        description: "Name for the randomized selection"
+      },
+      group: {
+        required: false,
+        valueType: "text",
+        description: "Name for a randomization group"
+      }
+    }
+  },
+  experiment: {
+    description: "Defines an experiment with permanent group assignment",
+    argument: { required: true, type: "text" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      group: {
+        required: false,
+        valueType: "text",
+        description: "Name for an experiment group"
+      }
+    }
+  },
+  group: {
+    description: "Defines a block of code (used in *randomize or *experiment)",
+    argument: { required: false, type: "text" },
+    body: { allowed: true, required: true }
+  },
+  // ---------------------------------------------------------------------------
+  // Program/Navigation Keywords
+  // ---------------------------------------------------------------------------
+  program: {
+    description: "Runs a subprogram and returns when it finishes",
+    argument: { required: true, type: "program-name" },
+    body: { allowed: false, required: false }
+  },
+  switch: {
+    description: "Switches to another program (pauses current)",
+    argument: { required: true, type: "program-name" },
+    body: { allowed: true, required: false },
+    subKeywords: {
+      reset: {
+        required: false,
+        valueType: "none",
+        description: "Restart target program from beginning"
+      }
+    }
+  },
+  // ---------------------------------------------------------------------------
+  // Variable Keywords
+  // ---------------------------------------------------------------------------
+  set: {
+    description: "Sets a variable's value to true",
+    argument: { required: true, type: "variable" },
+    body: { allowed: false, required: false }
+  },
+  // ---------------------------------------------------------------------------
+  // Events Keywords
+  // ---------------------------------------------------------------------------
+  events: {
+    description: "Defines named events that can be triggered",
+    argument: { required: false, type: "none" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      startup: {
+        required: false,
+        valueType: "none",
+        hasBody: true,
+        description: "Event run when program loads"
+      }
+    }
+  },
+  trigger: {
+    description: "Triggers an event by name",
+    argument: { required: true, type: "event-name" },
+    body: { allowed: true, required: false },
+    subKeywords: {
+      send: {
+        required: false,
+        valueType: "association",
+        description: "Data to send to the event"
+      }
+    }
+  },
+  // ---------------------------------------------------------------------------
+  // Service/Database Keywords
+  // ---------------------------------------------------------------------------
+  service: {
+    description: "Makes an HTTP request",
+    argument: { required: true, type: "service-name" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      path: {
+        required: true,
+        valueType: "text",
+        description: "Path to append to service URL"
+      },
+      method: {
+        required: true,
+        valueType: "enum",
+        enumValues: ["GET", "POST", "PUT", "DELETE"],
+        description: "HTTP method to use"
+      },
+      send: {
+        required: false,
+        valueType: "association",
+        description: "Data to send in the request"
+      },
+      success: {
+        required: true,
+        valueType: "none",
+        hasBody: true,
+        description: "Code to run on success (data in `it`)"
+      },
+      error: {
+        required: true,
+        valueType: "none",
+        hasBody: true,
+        description: "Code to run on error (error in `it`)"
+      }
+    },
+    requiredSubKeywords: ["path", "method", "success", "error"]
+  },
+  database: {
+    description: "Requests user info from the GuidedTrack database",
+    argument: { required: true, type: "text" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      what: {
+        required: true,
+        valueType: "enum",
+        enumValues: ["email"],
+        description: "Type of data to request"
+      },
+      success: {
+        required: true,
+        valueType: "none",
+        hasBody: true,
+        description: "Code to run on success (data in `it`)"
+      },
+      error: {
+        required: true,
+        valueType: "none",
+        hasBody: true,
+        description: "Code to run on error (error in `it`)"
+      }
+    },
+    requiredSubKeywords: ["what", "success", "error"]
+  },
+  // ---------------------------------------------------------------------------
+  // Email Keywords
+  // ---------------------------------------------------------------------------
+  email: {
+    description: "Sends an email immediately or at a specified time",
+    argument: { required: false, type: "none" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      subject: {
+        required: true,
+        valueType: "text",
+        description: "Email subject line"
+      },
+      body: {
+        required: true,
+        valueType: "none",
+        hasBody: true,
+        description: "Email body content"
+      },
+      to: {
+        required: false,
+        valueType: "text",
+        description: "Recipient email address"
+      },
+      when: {
+        required: false,
+        valueType: "datetime",
+        description: "When to send the email"
+      },
+      every: {
+        required: false,
+        valueType: "duration",
+        description: "Frequency for recurring emails"
+      },
+      until: {
+        required: false,
+        valueType: "datetime",
+        description: "When to stop recurring emails"
+      },
+      identifier: {
+        required: false,
+        valueType: "text",
+        description: "Name for cancelling scheduled emails"
+      },
+      cancel: {
+        required: false,
+        valueType: "text",
+        description: "Cancel emails with this identifier"
+      }
+    },
+    requiredSubKeywords: ["subject", "body"]
+  },
+  // ---------------------------------------------------------------------------
+  // Purchase Keywords
+  // ---------------------------------------------------------------------------
+  purchase: {
+    description: "Processes in-app purchases",
+    argument: { required: false, type: "text" },
+    body: { allowed: true, required: false },
+    subKeywords: {
+      status: {
+        required: false,
+        valueType: "none",
+        description: "Check subscription status"
+      },
+      frequency: {
+        required: false,
+        valueType: "enum",
+        enumValues: ["recurring"],
+        description: "Generate a subscription"
+      },
+      management: {
+        required: false,
+        valueType: "none",
+        description: "Open subscription management"
+      },
+      success: {
+        required: false,
+        valueType: "none",
+        hasBody: true,
+        description: "Code to run on success"
+      },
+      error: {
+        required: false,
+        valueType: "none",
+        hasBody: true,
+        description: "Code to run on error"
+      }
+    },
+    mutuallyExclusiveGroups: [["status", "frequency", "management"]],
+    conditionalRequirements: [
+      { if: ["status"], then: ["success", "error"] },
+      { if: ["frequency"], then: ["success", "error"] }
+    ]
+  },
+  // ---------------------------------------------------------------------------
+  // User Keywords
+  // ---------------------------------------------------------------------------
+  login: {
+    description: "Asks the user to log in",
+    argument: { required: false, type: "none" },
+    body: { allowed: true, required: false },
+    subKeywords: {
+      required: {
+        required: false,
+        valueType: "yes-no",
+        description: "Whether login is required"
+      }
+    }
+  },
+  // ---------------------------------------------------------------------------
+  // Scoring Keywords
+  // ---------------------------------------------------------------------------
+  points: {
+    description: "Gives or takes points from user scores",
+    argument: { required: true, type: "number" },
+    // Can include optional tag
+    body: { allowed: false, required: false }
+  },
+  summary: {
+    description: "Summarizes user responses",
+    argument: { required: false, type: "text" },
+    // Optional tag name
+    body: { allowed: false, required: false }
+  },
+  // ---------------------------------------------------------------------------
+  // Settings Keywords
+  // ---------------------------------------------------------------------------
+  settings: {
+    description: "Applies settings to the program",
+    argument: { required: false, type: "none" },
+    body: { allowed: true, required: true },
+    subKeywords: {
+      back: {
+        required: false,
+        valueType: "yes-no",
+        description: "Enable back navigation"
+      },
+      menu: {
+        required: false,
+        valueType: "yes-no",
+        description: "Show/hide run menu"
+      }
+    }
+  },
+  // ---------------------------------------------------------------------------
+  // Header (used within components, navigation, etc.)
+  // ---------------------------------------------------------------------------
+  header: {
+    description: "Defines a header",
+    argument: { required: true, type: "text" },
+    body: { allowed: false, required: false }
+  }
+};
+function getKeywordSpec(keyword) {
+  return KEYWORD_SPECS[keyword.toLowerCase()];
+}
+function getRequiredSubKeywords(keyword) {
+  const spec = getKeywordSpec(keyword);
+  if (!spec)
+    return [];
+  const required = [];
+  if (spec.requiredSubKeywords) {
+    required.push(...spec.requiredSubKeywords);
+  }
+  if (spec.subKeywords) {
+    for (const [name, subSpec] of Object.entries(spec.subKeywords)) {
+      if (subSpec.required && !required.includes(name)) {
+        required.push(name);
+      }
+    }
+  }
+  return required;
+}
+
+// ../dist/linter/rules/required-subkeywords.js
+var requiredSubkeywords = {
+  name: "required-subkeywords",
+  description: "Ensure keywords have all required sub-keywords",
+  severity: "error",
+  create(context) {
+    function checkKeyword(node) {
+      const keyword = node.keyword.toLowerCase();
+      const spec = getKeywordSpec(keyword);
+      if (!spec)
+        return;
+      const requiredSubs = getRequiredSubKeywords(keyword);
+      if (requiredSubs.length === 0)
+        return;
+      const presentSubs = new Set(node.subKeywords.map((sub) => sub.keyword.toLowerCase()));
+      const missingSubs = requiredSubs.filter((sub) => !presentSubs.has(sub));
+      if (missingSubs.length > 0) {
+        const missingList = missingSubs.map((s) => `*${s}:`).join(", ");
+        const plural = missingSubs.length > 1 ? "s" : "";
+        context.report({
+          message: `'*${keyword}:' is missing required sub-keyword${plural}: ${missingList}`,
+          line: node.loc.start.line,
+          column: node.loc.start.column
+        });
+      }
+    }
+    function visit(node) {
+      if (node.type === "Program") {
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      } else if (node.type === "KeywordStatement") {
+        checkKeyword(node);
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      }
+    }
+    return {
+      Program(node) {
+        visit(node);
+      }
+    };
+  }
+};
+
+// ../dist/linter/rules/valid-subkeyword-value.js
+var validSubkeywordValue = {
+  name: "valid-subkeyword-value",
+  description: "Ensure sub-keyword values are valid",
+  severity: "error",
+  create(context) {
+    function getArgumentValue(argument) {
+      if (!argument)
+        return null;
+      if (argument.type === "Literal") {
+        const lit = argument;
+        return typeof lit.value === "string" ? lit.value : String(lit.value);
+      }
+      if (argument.type === "TextContent") {
+        const tc = argument;
+        if (tc.parts.length === 1 && typeof tc.parts[0] === "string") {
+          return tc.parts[0].trim();
+        }
+      }
+      return null;
+    }
+    function checkSubKeyword(parentKeyword, sub) {
+      const spec = getKeywordSpec(parentKeyword);
+      if (!spec?.subKeywords)
+        return;
+      const subKeyword = sub.keyword.toLowerCase();
+      const subSpec = spec.subKeywords[subKeyword];
+      if (!subSpec)
+        return;
+      const value = getArgumentValue(sub.argument);
+      if (subSpec.valueType === "enum" && subSpec.enumValues && value !== null) {
+        const normalizedValue = value.toLowerCase();
+        const validValues = subSpec.enumValues.map((v) => v.toLowerCase());
+        if (!validValues.includes(normalizedValue)) {
+          const validList = subSpec.enumValues.join(", ");
+          context.report({
+            message: `Invalid value '${value}' for '*${subKeyword}:'. Valid values are: ${validList}`,
+            line: sub.loc.start.line,
+            column: sub.loc.start.column
+          });
+        }
+      }
+      if (subSpec.valueType === "yes-no" && value !== null) {
+        const normalizedValue = value.toLowerCase();
+        if (normalizedValue !== "yes" && normalizedValue !== "no") {
+          context.report({
+            message: `Invalid value '${value}' for '*${subKeyword}:'. Expected 'yes' or 'no'`,
+            line: sub.loc.start.line,
+            column: sub.loc.start.column
+          });
+        }
+      }
+    }
+    function checkKeyword(node) {
+      const keyword = node.keyword.toLowerCase();
+      for (const sub of node.subKeywords) {
+        checkSubKeyword(keyword, sub);
+      }
+    }
+    function visit(node) {
+      if (node.type === "Program") {
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      } else if (node.type === "KeywordStatement") {
+        checkKeyword(node);
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      }
+    }
+    return {
+      Program(node) {
+        visit(node);
+      }
+    };
+  }
+};
+
+// ../dist/linter/rules/no-inline-argument.js
+var noInlineArgument = {
+  name: "no-inline-argument",
+  description: "Ensure keywords that should not have inline arguments do not have them",
+  severity: "error",
+  create(context) {
+    function checkKeyword(node) {
+      const keyword = node.keyword.toLowerCase();
+      const spec = getKeywordSpec(keyword);
+      if (!spec)
+        return;
+      if (spec.argument.type === "none" && node.argument !== null) {
+        context.report({
+          message: `'*${keyword}' should not have an inline argument`,
+          line: node.loc.start.line,
+          column: node.loc.start.column
+        });
+      }
+    }
+    function visit(node) {
+      if (node.type === "Program") {
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      } else if (node.type === "KeywordStatement") {
+        checkKeyword(node);
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      }
+    }
+    return {
+      Program(node) {
+        visit(node);
+      }
+    };
+  }
+};
+
+// ../dist/linter/rules/goto-needs-reset-in-events.js
+var gotoNeedsResetInEvents = {
+  name: "goto-needs-reset-in-events",
+  description: "Ensure *goto: inside *events has *reset",
+  severity: "warning",
+  create(context) {
+    function checkGotoInEvents(node) {
+      const keyword = node.keyword.toLowerCase();
+      if (keyword !== "goto")
+        return;
+      const hasReset = node.subKeywords.some((sub) => sub.keyword.toLowerCase() === "reset");
+      if (!hasReset) {
+        context.report({
+          message: `'*goto:' inside '*events' should have '*reset' to prevent unexpected behavior`,
+          line: node.loc.start.line,
+          column: node.loc.start.column
+        });
+      }
+    }
+    function visitInsideEvents(statements) {
+      for (const stmt of statements) {
+        if (stmt.type === "KeywordStatement") {
+          checkGotoInEvents(stmt);
+          visitInsideEvents(stmt.body);
+        } else if (stmt.type === "AnswerOption") {
+          visitInsideEvents(stmt.body);
+        }
+      }
+    }
+    function visit(node) {
+      if (node.type === "Program") {
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      } else if (node.type === "KeywordStatement") {
+        const keyword = node.keyword.toLowerCase();
+        if (keyword === "events") {
+          visitInsideEvents(node.body);
+        } else {
+          for (const stmt of node.body) {
+            if (stmt.type === "KeywordStatement") {
+              visit(stmt);
+            }
+          }
+        }
+      }
+    }
+    return {
+      Program(node) {
+        visit(node);
+      }
+    };
+  }
+};
+
+// ../dist/linter/rules/purchase-subkeyword-constraints.js
+var purchaseSubkeywordConstraints = {
+  name: "purchase-subkeyword-constraints",
+  description: "Ensure *purchase has correct sub-keyword combinations",
+  severity: "error",
+  create(context) {
+    const MODE_SUBKEYWORDS = ["status", "frequency", "management"];
+    function checkPurchase(node) {
+      const keyword = node.keyword.toLowerCase();
+      if (keyword !== "purchase")
+        return;
+      const presentSubs = new Set(node.subKeywords.map((sub) => sub.keyword.toLowerCase()));
+      const presentModes = MODE_SUBKEYWORDS.filter((mode2) => presentSubs.has(mode2));
+      if (presentModes.length === 0) {
+        context.report({
+          message: `'*purchase' must have exactly one of: *status, *frequency, or *management`,
+          line: node.loc.start.line,
+          column: node.loc.start.column
+        });
+        return;
+      }
+      if (presentModes.length > 1) {
+        const modeList = presentModes.map((m) => `*${m}`).join(", ");
+        context.report({
+          message: `'*purchase' cannot have multiple mode sub-keywords. Found: ${modeList}. Use only one.`,
+          line: node.loc.start.line,
+          column: node.loc.start.column
+        });
+        return;
+      }
+      const mode = presentModes[0];
+      if (mode === "status" || mode === "frequency") {
+        const missingCallbacks = [];
+        if (!presentSubs.has("success")) {
+          missingCallbacks.push("*success");
+        }
+        if (!presentSubs.has("error")) {
+          missingCallbacks.push("*error");
+        }
+        if (missingCallbacks.length > 0) {
+          context.report({
+            message: `'*purchase' with '*${mode}' requires: ${missingCallbacks.join(" and ")}`,
+            line: node.loc.start.line,
+            column: node.loc.start.column
+          });
+        }
+      }
+    }
+    function visit(node) {
+      if (node.type === "Program") {
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      } else if (node.type === "KeywordStatement") {
+        checkPurchase(node);
+        for (const stmt of node.body) {
+          if (stmt.type === "KeywordStatement") {
+            visit(stmt);
+          }
+        }
+      }
+    }
+    return {
+      Program(node) {
+        visit(node);
+      }
+    };
+  }
+};
+
 // ../dist/linter/rules/index.js
 var rules = {
   "no-undefined-vars": noUndefinedVars,
@@ -2472,50 +3496,114 @@ var rules = {
   "no-unclosed-string": noUnclosedString,
   "no-unclosed-bracket": noUnclosedBracket,
   "no-single-quotes": noSingleQuotes,
-  "no-unreachable-code": noUnreachableCode
+  "no-unreachable-code": noUnreachableCode,
+  "required-subkeywords": requiredSubkeywords,
+  "valid-subkeyword-value": validSubkeywordValue,
+  "no-inline-argument": noInlineArgument,
+  "goto-needs-reset-in-events": gotoNeedsResetInEvents,
+  "purchase-subkeyword-constraints": purchaseSubkeywordConstraints
 };
 
 // ../dist/linter/directives.js
 function parseDirectives(source) {
   const lines = source.split("\n");
   const state = {
-    disabledLines: /* @__PURE__ */ new Map(),
+    lintDisabledLines: /* @__PURE__ */ new Map(),
+    formatDisabledLines: /* @__PURE__ */ new Set(),
     fromParentVars: /* @__PURE__ */ new Set(),
     fromChildVars: /* @__PURE__ */ new Set(),
     toParentVars: /* @__PURE__ */ new Set(),
     toChildVars: /* @__PURE__ */ new Set()
   };
-  const activeDisables = /* @__PURE__ */ new Map();
-  let nextLineDisable = null;
+  const activeLintDisables = /* @__PURE__ */ new Map();
+  let formatDisableStart = null;
+  let nextLineLintDisable = null;
+  let nextLineFormatDisable = false;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const lineNum = i + 1;
-    if (nextLineDisable !== null) {
-      state.disabledLines.set(lineNum, nextLineDisable);
-      nextLineDisable = null;
+    if (nextLineLintDisable !== null) {
+      state.lintDisabledLines.set(lineNum, nextLineLintDisable);
+      nextLineLintDisable = null;
+    }
+    if (nextLineFormatDisable) {
+      state.formatDisabledLines.add(lineNum);
+      nextLineFormatDisable = false;
     }
     const commentMatch = line.match(/^\s*--\s*(.+)$/);
     if (!commentMatch)
       continue;
     const commentContent = commentMatch[1].trim();
-    if (commentContent.startsWith("gtlint-disable-next-line")) {
-      const rulesStr = commentContent.slice("gtlint-disable-next-line".length).trim();
+    if (commentContent.startsWith("gt-disable-next-line")) {
+      const rulesStr = commentContent.slice("gt-disable-next-line".length).trim();
       if (rulesStr) {
-        nextLineDisable = parseRuleList(rulesStr);
+        nextLineLintDisable = parseRuleList(rulesStr);
       } else {
-        nextLineDisable = "all";
+        nextLineLintDisable = "all";
+      }
+      nextLineFormatDisable = true;
+      continue;
+    }
+    if (commentContent.startsWith("gt-disable") && !commentContent.startsWith("gt-disable-next-line")) {
+      const rulesStr = commentContent.slice("gt-disable".length).trim();
+      if (rulesStr) {
+        const rules2 = parseRuleList(rulesStr);
+        for (const rule of rules2) {
+          activeLintDisables.set(rule, lineNum);
+        }
+      } else {
+        activeLintDisables.set("all", lineNum);
+      }
+      if (formatDisableStart === null) {
+        formatDisableStart = lineNum;
       }
       continue;
     }
-    if (commentContent.startsWith("gtlint-disable")) {
+    if (commentContent.startsWith("gt-enable")) {
+      const rulesStr = commentContent.slice("gt-enable".length).trim();
+      if (rulesStr) {
+        const rules2 = parseRuleList(rulesStr);
+        for (const rule of rules2) {
+          const startLine = activeLintDisables.get(rule);
+          if (startLine !== void 0) {
+            addLintDisabledRegion(state, startLine, lineNum - 1, /* @__PURE__ */ new Set([rule]));
+            activeLintDisables.delete(rule);
+          }
+        }
+      } else {
+        for (const [key, startLine] of activeLintDisables) {
+          if (key === "all") {
+            addLintDisabledRegion(state, startLine, lineNum - 1, "all");
+          } else {
+            addLintDisabledRegion(state, startLine, lineNum - 1, /* @__PURE__ */ new Set([key]));
+          }
+        }
+        activeLintDisables.clear();
+      }
+      if (formatDisableStart !== null) {
+        addFormatDisabledRegion(state, formatDisableStart, lineNum - 1);
+        formatDisableStart = null;
+      }
+      continue;
+    }
+    if (commentContent.startsWith("gtlint-disable-next-line")) {
+      const rulesStr = commentContent.slice("gtlint-disable-next-line".length).trim();
+      if (rulesStr) {
+        nextLineLintDisable = parseRuleList(rulesStr);
+      } else {
+        nextLineLintDisable = "all";
+      }
+      continue;
+    }
+    if (commentContent.startsWith("gtlint-disable") && !commentContent.startsWith("gtlint-disable-next-line")) {
       const rulesStr = commentContent.slice("gtlint-disable".length).trim();
       if (rulesStr) {
         const rules2 = parseRuleList(rulesStr);
         for (const rule of rules2) {
-          activeDisables.set(rule, lineNum);
+          activeLintDisables.set(rule, lineNum);
         }
       } else {
-        activeDisables.set("all", lineNum);
+        activeLintDisables.set("all", lineNum);
       }
       continue;
     }
@@ -2524,21 +3612,34 @@ function parseDirectives(source) {
       if (rulesStr) {
         const rules2 = parseRuleList(rulesStr);
         for (const rule of rules2) {
-          const startLine = activeDisables.get(rule);
+          const startLine = activeLintDisables.get(rule);
           if (startLine !== void 0) {
-            addDisabledRegion(state, startLine, lineNum - 1, /* @__PURE__ */ new Set([rule]));
-            activeDisables.delete(rule);
+            addLintDisabledRegion(state, startLine, lineNum - 1, /* @__PURE__ */ new Set([rule]));
+            activeLintDisables.delete(rule);
           }
         }
       } else {
-        for (const [key, startLine] of activeDisables) {
+        for (const [key, startLine] of activeLintDisables) {
           if (key === "all") {
-            addDisabledRegion(state, startLine, lineNum - 1, "all");
+            addLintDisabledRegion(state, startLine, lineNum - 1, "all");
           } else {
-            addDisabledRegion(state, startLine, lineNum - 1, /* @__PURE__ */ new Set([key]));
+            addLintDisabledRegion(state, startLine, lineNum - 1, /* @__PURE__ */ new Set([key]));
           }
         }
-        activeDisables.clear();
+        activeLintDisables.clear();
+      }
+      continue;
+    }
+    if (commentContent.startsWith("gtformat-disable") && !commentContent.startsWith("gtformat-disable-next-line")) {
+      if (formatDisableStart === null) {
+        formatDisableStart = lineNum;
+      }
+      continue;
+    }
+    if (commentContent.startsWith("gtformat-enable")) {
+      if (formatDisableStart !== null) {
+        addFormatDisabledRegion(state, formatDisableStart, lineNum - 1);
+        formatDisableStart = null;
       }
       continue;
     }
@@ -2576,12 +3677,15 @@ function parseDirectives(source) {
     }
   }
   const totalLines = lines.length;
-  for (const [key, startLine] of activeDisables) {
+  for (const [key, startLine] of activeLintDisables) {
     if (key === "all") {
-      addDisabledRegion(state, startLine, totalLines, "all");
+      addLintDisabledRegion(state, startLine, totalLines, "all");
     } else {
-      addDisabledRegion(state, startLine, totalLines, /* @__PURE__ */ new Set([key]));
+      addLintDisabledRegion(state, startLine, totalLines, /* @__PURE__ */ new Set([key]));
     }
+  }
+  if (formatDisableStart !== null) {
+    addFormatDisabledRegion(state, formatDisableStart, totalLines);
   }
   return state;
 }
@@ -2591,28 +3695,36 @@ function parseRuleList(str) {
 function parseVarList(str) {
   return str.split(",").map((s) => s.trim()).filter((s) => s.length > 0);
 }
-function addDisabledRegion(state, startLine, endLine, rules2) {
+function addLintDisabledRegion(state, startLine, endLine, rules2) {
   for (let line = startLine; line <= endLine; line++) {
-    const existing = state.disabledLines.get(line);
+    const existing = state.lintDisabledLines.get(line);
     if (rules2 === "all") {
-      state.disabledLines.set(line, "all");
+      state.lintDisabledLines.set(line, "all");
     } else if (existing === "all") {
     } else if (existing) {
       for (const rule of rules2) {
         existing.add(rule);
       }
     } else {
-      state.disabledLines.set(line, new Set(rules2));
+      state.lintDisabledLines.set(line, new Set(rules2));
     }
   }
 }
+function addFormatDisabledRegion(state, startLine, endLine) {
+  for (let line = startLine; line <= endLine; line++) {
+    state.formatDisabledLines.add(line);
+  }
+}
 function isRuleDisabled(state, line, ruleId) {
-  const disabled = state.disabledLines.get(line);
+  const disabled = state.lintDisabledLines.get(line);
   if (!disabled)
     return false;
   if (disabled === "all")
     return true;
   return disabled.has(ruleId);
+}
+function isFormatDisabled(state, line) {
+  return state.formatDisabledLines.has(line);
 }
 
 // ../dist/linter/linter.js
@@ -2802,8 +3914,22 @@ var Formatter = class {
     let previousLineWasBlank = false;
     let previousLineWasTopLevel = false;
     let consecutiveBlankLines = 0;
+    const directives = parseDirectives(source);
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i];
+      const lineNum = i + 1;
+      if (isFormatDisabled(directives, lineNum)) {
+        formattedLines.push(line);
+        const isBlank2 = line.trim() === "";
+        if (isBlank2) {
+          consecutiveBlankLines++;
+        } else {
+          consecutiveBlankLines = 0;
+        }
+        previousLineWasBlank = isBlank2;
+        previousLineWasTopLevel = !isBlank2 && !line.startsWith("	");
+        continue;
+      }
       if (this.config.trimTrailingWhitespace) {
         line = line.replace(/[ \t]+$/, "");
       }
@@ -2860,6 +3986,9 @@ var Formatter = class {
   }
   formatExpression(content) {
     let result = content;
+    const prefix = ">> ";
+    const expressionPart = result.slice(prefix.length);
+    result = prefix + this.normalizeWhitespace(expressionPart).trim();
     if (this.config.spaceAroundOperators) {
       result = this.formatOperatorsOutsideStrings(result);
     }
