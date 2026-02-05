@@ -9,6 +9,11 @@ import { noUnclosedString } from './no-unclosed-string.js';
 import { noUnclosedBracket } from './no-unclosed-bracket.js';
 import { noSingleQuotes } from './no-single-quotes.js';
 import { noUnreachableCode } from './no-unreachable-code.js';
+import { requiredSubkeywords } from './required-subkeywords.js';
+import { validSubkeywordValue } from './valid-subkeyword-value.js';
+import { noInlineArgument } from './no-inline-argument.js';
+import { gotoNeedsResetInEvents } from './goto-needs-reset-in-events.js';
+import { purchaseSubkeywordConstraints } from './purchase-subkeyword-constraints.js';
 
 export const rules: Record<string, LintRule> = {
   'no-undefined-vars': noUndefinedVars,
@@ -21,6 +26,11 @@ export const rules: Record<string, LintRule> = {
   'no-unclosed-bracket': noUnclosedBracket,
   'no-single-quotes': noSingleQuotes,
   'no-unreachable-code': noUnreachableCode,
+  'required-subkeywords': requiredSubkeywords,
+  'valid-subkeyword-value': validSubkeywordValue,
+  'no-inline-argument': noInlineArgument,
+  'goto-needs-reset-in-events': gotoNeedsResetInEvents,
+  'purchase-subkeyword-constraints': purchaseSubkeywordConstraints,
 };
 
 export function getRule(name: string): LintRule | undefined {

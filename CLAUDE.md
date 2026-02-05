@@ -94,6 +94,17 @@ The core infrastructure for GTLint is now in place:
 - Integration with the linter (shows diagnostics in editor)
 - Language configuration (brackets, comments, auto-closing pairs)
 
+### Language Specification (`src/language/`)
+- Formal TypeScript specification of all GuidedTrack keywords
+- Defines for each keyword:
+  - Argument requirements (required/optional, type: url, text, number, expression, etc.)
+  - Body requirements (whether indented content is allowed/required)
+  - Valid sub-keywords with their value types
+  - Required sub-keywords (e.g., `*chart:` requires `*type:` and `*data:`)
+  - Mutually exclusive sub-keywords (e.g., `*purchase` needs exactly one of `*status`/`*frequency`/`*management`)
+  - Conditional requirements (e.g., if `*status` is used, then `*success` and `*error` are required)
+- Helper functions for querying the specification
+
 ## Key Design Decisions
 
 1. **Tab-only indentation**: GuidedTrack uses only tabs (not spaces) for indentation, enforced by the `indent-style` rule
@@ -114,6 +125,8 @@ The core infrastructure for GTLint is now in place:
 - `/samples` - Production GuidedTrack programs demonstrating real-world usage
 - `/gt.pdf` - API reference for all keywords, sub-keywords, and built-in functions
 - `/LANGUAGE_SPEC.md` - Concise language specification (see below)
+- `/src/language/keyword-spec.ts` - Formal TypeScript specification of all keywords, their argument requirements, valid sub-keywords, and constraints (used by lint rules)
+- `/TODO.md` - Task tracking for bugs, features, and ideas
 
 # Guidelines
 
