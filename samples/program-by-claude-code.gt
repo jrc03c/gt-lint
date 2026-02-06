@@ -1,0 +1,87 @@
+-- OVERVIEW:
+--
+-- This program is a mailing list subscription management program. It allows
+-- users to add or remove themselves from a fake mailing list. The mailing list
+-- is hosted in an Airtable database, the details of which are defined below.
+--
+-- In a little more detail, this program:
+--
+-- (1) Asks the user for their email address.
+-- (2) "Standardizes" the email address using the email address standardization
+--     service defined below.
+-- (3) Asks the user if they want to subscribe to or unsubscribe from the
+--     mailing list.
+-- (4) Upserts to the database a record that includes:
+--     (a) the email address
+--     (b) any UTM tags that are defined (i.e., `utm_source`, `utm_medium`, and
+--         `utm_campaign`)
+--     (c) a status value of "active" if the user wants to subscribe, or a
+--         status of "inactive" in the user wants to unsubscribe
+-- (5) If the user was added as a new subscriber, then it sends them a welcome
+--     email.
+-- (6) Displays a message to the user indicating that their requested subscribe
+--     or unsubscribe action was performed.
+--
+-- SERVICE (API) DETAILS:
+--
+-- When using the GuidedTrack website, services are defined as part of a
+-- program's settings and are thus not visible in the program source code. 
+-- However, I'm going to give *all* of the information here so that you can test
+-- the API calls with `curl` or similar to confirm that they work and that they
+-- return the expected values.
+--
+-- The service settings that can be defined in a program's settings include:
+--
+-- (1) the service's name;
+-- (2) the base URL to which `*path` values are appended;
+-- (3) a username and password, if needed; and...
+-- (4) header key-value pairs, if needed.
+--
+-- So, for example, a service may have these settings defined in a program's
+-- settings:
+--
+-- NAME: My Cool Service
+-- URL: https://api.example.com/v3
+-- USERNAME: cooluser
+-- PASSWORD: p4$$w0rd!
+--
+-- Then, in the program's source code, the service might be used like this for
+-- a GET request:
+--
+-- ```
+-- *service: My Cool Service
+--     *method: GET
+--     *path: /path/to/some/endpoint?var1=val1&var2=val2
+--     *success
+--         ...
+--     *error
+--         ...
+-- ```
+--
+-- And might be used like this for a POST request that sends a JSON body:
+--
+-- ```
+-- *service: My Cool Service
+--     *method: POST
+--     *path: /path/to/another/endpoint
+--     *send: { "var1" -> val1, "var2" -> val2 }
+--     *success
+--         ...
+--     *error
+--         ...
+-- ```
+--
+-- Anyway, with that context in mind, here are the service settings for this
+-- particular program:
+--
+-- NAME: ct-programs-vercel-app
+-- BASE URL: https://ct-programs.vercel.app/api
+-- METHOD: GET
+-- PATH: /utils/standardize-email-address?email_address={email_address}
+-- RESPONSE: { email_address: "<email_address_standardized>" }
+-- 
+-- NAME: Airtable
+-- BASE URL: https://api.airtable.com/v0
+-- METHOD: (various)
+-- API TOKEN: (stored in .env along with the base and table IDs)
+-- API DOCUMENTATION: https://airtable.com/developers/web/api/introduction
