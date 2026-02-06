@@ -91,7 +91,7 @@ export class Parser {
             // For expression keywords, re-tokenize and parse as expression
             if (expressionKeywords.includes(keyword)) {
                 const textToken = this.advance();
-                argument = this.parseTextAsExpression(textToken.value, textToken);
+                argument = this.parseTextAsExpression(textToken.value, textToken, keyword);
             }
             else {
                 argument = this.parseTextContent();
@@ -488,11 +488,31 @@ export class Parser {
         return name.toLowerCase();
     }
     /**
+     * Parses a *for loop expression: [var ,] var in collection
+     * Handles both `*for: v in x` and `*for: i, v in x` patterns.
+     */
+    parseForExpression() {
+        let loopVars = this.parseAdditive();
+        // Handle comma-separated variables: i, v
+        while (this.check(TokenType.COMMA)) {
+            this.advance(); // consume comma
+            const right = this.parseAdditive();
+            loopVars = createBinaryExpression(',', loopVars, right, this.createLoc(loopVars.loc.start, right.loc.end));
+        }
+        // Parse 'in collection'
+        if (this.check(TokenType.OPERATOR) && this.peek().value.toLowerCase() === 'in') {
+            this.advance(); // consume 'in'
+            const collection = this.parseExpression();
+            return createBinaryExpression('in', loopVars, collection, this.createLoc(loopVars.loc.start, collection.loc.end));
+        }
+        return loopVars;
+    }
+    /**
      * Re-tokenizes and parses a text string as an expression.
      * This is used for keywords like *if:, *while:, etc. that expect expressions
      * but initially receive TEXT tokens from the lexer.
      */
-    parseTextAsExpression(text, originalToken) {
+    parseTextAsExpression(text, originalToken, keyword) {
         // Prepend >> to make the lexer treat it as an expression
         const exprSource = `>> ${text}`;
         // Re-tokenize the text as an expression
@@ -522,8 +542,8 @@ export class Parser {
         // Temporarily replace tokens with expression tokens
         this.tokens = exprTokens;
         this.pos = 0;
-        // Parse as expression
-        const expr = this.parseExpression();
+        // Parse as expression (use for-specific parser for *for loops)
+        const expr = keyword === 'for' ? this.parseForExpression() : this.parseExpression();
         // Restore parser state
         this.tokens = savedTokens;
         this.pos = savedPos;

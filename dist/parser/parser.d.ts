@@ -32,6 +32,11 @@ export declare class Parser {
     private parseArguments;
     private extractKeywordName;
     /**
+     * Parses a *for loop expression: [var ,] var in collection
+     * Handles both `*for: v in x` and `*for: i, v in x` patterns.
+     */
+    private parseForExpression;
+    /**
      * Re-tokenizes and parses a text string as an expression.
      * This is used for keywords like *if:, *while:, etc. that expect expressions
      * but initially receive TEXT tokens from the lexer.

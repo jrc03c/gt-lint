@@ -994,7 +994,7 @@ var Parser = class {
     if (this.check(TokenType.TEXT) || this.check(TokenType.INTERPOLATION_START)) {
       if (expressionKeywords.includes(keyword)) {
         const textToken = this.advance();
-        argument = this.parseTextAsExpression(textToken.value, textToken);
+        argument = this.parseTextAsExpression(textToken.value, textToken, keyword);
       } else {
         argument = this.parseTextContent();
       }
@@ -1350,11 +1350,29 @@ var Parser = class {
     return name.toLowerCase();
   }
   /**
+   * Parses a *for loop expression: [var ,] var in collection
+   * Handles both `*for: v in x` and `*for: i, v in x` patterns.
+   */
+  parseForExpression() {
+    let loopVars = this.parseAdditive();
+    while (this.check(TokenType.COMMA)) {
+      this.advance();
+      const right = this.parseAdditive();
+      loopVars = createBinaryExpression(",", loopVars, right, this.createLoc(loopVars.loc.start, right.loc.end));
+    }
+    if (this.check(TokenType.OPERATOR) && this.peek().value.toLowerCase() === "in") {
+      this.advance();
+      const collection = this.parseExpression();
+      return createBinaryExpression("in", loopVars, collection, this.createLoc(loopVars.loc.start, collection.loc.end));
+    }
+    return loopVars;
+  }
+  /**
    * Re-tokenizes and parses a text string as an expression.
    * This is used for keywords like *if:, *while:, etc. that expect expressions
    * but initially receive TEXT tokens from the lexer.
    */
-  parseTextAsExpression(text, originalToken) {
+  parseTextAsExpression(text, originalToken, keyword) {
     const exprSource = `>> ${text}`;
     const allTokens = tokenize(exprSource);
     const exprTokens = allTokens.filter((t) => t.type !== TokenType.EXPRESSION_START && t.type !== TokenType.EOF).map((t) => {
@@ -1375,7 +1393,7 @@ var Parser = class {
     const savedPos = this.pos;
     this.tokens = exprTokens;
     this.pos = 0;
-    const expr = this.parseExpression();
+    const expr = keyword === "for" ? this.parseForExpression() : this.parseExpression();
     this.tokens = savedTokens;
     this.pos = savedPos;
     return expr;
@@ -1529,6 +1547,9 @@ var noUndefinedVars = {
         } else if (expr.left.type === "BinaryExpression" && expr.left.operator === ",") {
           collectForVars(expr.left);
         }
+      } else if (expr.type === "BinaryExpression" && expr.operator === ",") {
+        collectForVars(expr.left);
+        collectForVars(expr.right);
       } else if (expr.type === "Identifier") {
         definedVars.add(expr.name);
       }
@@ -1714,6 +1735,9 @@ var noUnusedVars = {
         } else if (expr.left.type === "BinaryExpression" && expr.left.operator === ",") {
           collectForVars(expr.left, line, column);
         }
+      } else if (expr.type === "BinaryExpression" && expr.operator === ",") {
+        collectForVars(expr.left, line, column);
+        collectForVars(expr.right, line, column);
       } else if (expr.type === "Identifier") {
         addDefinition(expr.name, line, column);
       }
