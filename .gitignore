@@ -1,4 +1,5 @@
+.env
 .pnpm-store
-node_modules
-dist/
 *.vsix
+dist/
+node_modules
