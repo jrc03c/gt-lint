@@ -17,8 +17,10 @@ export class Formatter {
     const lines = source.split('\n');
     const formattedLines: string[] = [];
     let previousLineWasBlank = false;
-    let previousLineWasTopLevel = false;
     let consecutiveBlankLines = 0;
+
+    // Track content at each indentation level for blank line insertion
+    const lastContentAtLevel = new Map<number, { type: 'keyword' | 'other'; hadChildren: boolean }>();
 
     // Parse directives to respect gtformat-disable regions
     const directives = parseDirectives(source);
@@ -36,9 +38,24 @@ export class Formatter {
           consecutiveBlankLines++;
         } else {
           consecutiveBlankLines = 0;
+          // Update level tracking for disabled lines too
+          const indentLevel = line.search(/[^\t]/);
+          if (indentLevel >= 0) {
+            const trimmed = line.trimStart();
+            const contentType: 'keyword' | 'other' =
+              trimmed.startsWith('*') && !trimmed.startsWith('--') ? 'keyword' : 'other';
+            // Clear deeper levels
+            for (const key of lastContentAtLevel.keys()) {
+              if (key > indentLevel) lastContentAtLevel.delete(key);
+            }
+            // Mark parent levels as having children
+            for (const [key, entry] of lastContentAtLevel) {
+              if (key < indentLevel) entry.hadChildren = true;
+            }
+            lastContentAtLevel.set(indentLevel, { type: contentType, hadChildren: false });
+          }
         }
         previousLineWasBlank = isBlank;
-        previousLineWasTopLevel = !isBlank && !line.startsWith('\t');
         continue;
       }
 
@@ -60,18 +77,35 @@ export class Formatter {
         consecutiveBlankLines = 0;
       }
 
-      // Check if current line is top-level (no indentation)
-      const isTopLevel = !isBlank && !line.startsWith('\t');
+      // Manage blank lines between blocks at any indentation level
+      if (!isBlank && this.config.blankLinesBetweenBlocks > 0) {
+        const indentLevel = line.search(/[^\t]/);
+        if (indentLevel >= 0) {
+          const trimmed = line.trimStart();
+          const isComment = trimmed.startsWith('--');
+          const contentType: 'keyword' | 'other' =
+            trimmed.startsWith('*') && !isComment ? 'keyword' : 'other';
 
-      // Manage blank lines between blocks
-      if (this.config.blankLinesBetweenBlocks > 0) {
-        if (isTopLevel && previousLineWasTopLevel && !previousLineWasBlank && !isBlank) {
-          // Check if this starts a new block (keyword at start of line)
-          const trimmed = line.trim();
-          if (trimmed.startsWith('*') && !trimmed.startsWith('--')) {
-            // Add blank line before new top-level keyword block
-            formattedLines.push('');
+          // Clear deeper levels (they're done)
+          for (const key of lastContentAtLevel.keys()) {
+            if (key > indentLevel) lastContentAtLevel.delete(key);
           }
+          // Mark parent levels as having children
+          for (const [key, entry] of lastContentAtLevel) {
+            if (key < indentLevel) entry.hadChildren = true;
+          }
+
+          // Check if we need a blank line before this line
+          if (!isComment) {
+            const prev = lastContentAtLevel.get(indentLevel);
+            if (prev && (prev.hadChildren || prev.type !== contentType)) {
+              if (!previousLineWasBlank) {
+                formattedLines.push('');
+              }
+            }
+          }
+
+          lastContentAtLevel.set(indentLevel, { type: contentType, hadChildren: false });
         }
       }
 
@@ -81,7 +115,6 @@ export class Formatter {
       formattedLines.push(line);
 
       previousLineWasBlank = isBlank;
-      previousLineWasTopLevel = isTopLevel;
     }
 
     let result = formattedLines.join('\n');

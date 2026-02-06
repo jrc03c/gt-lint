@@ -281,7 +281,14 @@ export default {
     ensureNewlineAtEndOfFile: true,
 
     // Maximum number of consecutive blank lines allowed
-    maxConsecutiveBlankLines: 2
+    maxConsecutiveBlankLines: 2,
+
+    // Insert blank lines between blocks at any indentation level.
+    // Blank lines are inserted when a keyword block has indented children
+    // or when content type transitions between keyword and non-keyword.
+    // Sibling sub-keywords without children stay grouped.
+    // Set to 0 to disable.
+    blankLinesBetweenBlocks: 1
   }
 };
 ```

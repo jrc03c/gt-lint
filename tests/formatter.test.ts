@@ -282,6 +282,112 @@ Second line
     });
   });
 
+  describe('Blank lines between blocks', () => {
+    it('should insert blank line after keyword block with children before text', () => {
+      const source = '*question: Name?\n\t*save: name\nHi, {name}!\n';
+      const result = format(source);
+
+      expect(result).toBe('*question: Name?\n\t*save: name\n\nHi, {name}!\n');
+    });
+
+    it('should insert blank line after keyword block with children before another keyword', () => {
+      const source = '*question: Name?\n\t*save: name\n*question: Age?\n\t*save: age\n';
+      const result = format(source);
+
+      expect(result).toBe('*question: Name?\n\t*save: name\n\n*question: Age?\n\t*save: age\n');
+    });
+
+    it('should insert blank line on keyword-to-non-keyword transition', () => {
+      const source = '*header: Welcome\nSome text here\n';
+      const result = format(source);
+
+      expect(result).toBe('*header: Welcome\n\nSome text here\n');
+    });
+
+    it('should insert blank line on non-keyword-to-keyword transition', () => {
+      const source = 'Some text here\n*header: Welcome\n';
+      const result = format(source);
+
+      expect(result).toBe('Some text here\n\n*header: Welcome\n');
+    });
+
+    it('should not insert blank line between consecutive non-keyword lines', () => {
+      const source = 'Line one\nLine two\nLine three\n';
+      const result = format(source);
+
+      expect(result).toBe('Line one\nLine two\nLine three\n');
+    });
+
+    it('should not insert blank line between sibling sub-keywords without children', () => {
+      const source = '*question: Email?\n\t*type: text\n\t*save: email\n\t*placeholder: you@example.com\n';
+      const result = format(source);
+
+      expect(result).toBe('*question: Email?\n\t*type: text\n\t*save: email\n\t*placeholder: you@example.com\n');
+    });
+
+    it('should insert blank lines at nested levels between keyword blocks', () => {
+      const source = '*page\n\t*question: Q1\n\t\t*save: a\n\t*question: Q2\n\t\t*save: b\n\tThanks!\n';
+      const result = format(source);
+
+      expect(result).toBe('*page\n\t*question: Q1\n\t\t*save: a\n\n\t*question: Q2\n\t\t*save: b\n\n\tThanks!\n');
+    });
+
+    it('should not double blank lines when one already exists', () => {
+      const source = '*question: Name?\n\t*save: name\n\n*question: Age?\n\t*save: age\n';
+      const result = format(source);
+
+      expect(result).toBe('*question: Name?\n\t*save: name\n\n*question: Age?\n\t*save: age\n');
+    });
+
+    it('should disable blank line insertion when blankLinesBetweenBlocks is 0', () => {
+      const source = '*question: Name?\n\t*save: name\n*header: Welcome\nSome text\n';
+      const result = format(source, { blankLinesBetweenBlocks: 0 });
+
+      expect(result).toBe('*question: Name?\n\t*save: name\n*header: Welcome\nSome text\n');
+    });
+
+    it('should be idempotent with blank line insertion', () => {
+      const formatter = new Formatter();
+      const source = '*question: Name?\n\t*save: name\nHi!\n*question: Age?\n\t*save: age\nBye!\n';
+
+      const once = formatter.format(source);
+      const twice = formatter.format(once);
+
+      expect(once).toBe(twice);
+    });
+
+    it('should respect gtformat-disable regions', () => {
+      const source = '-- gtformat-disable\n*question: Name?\n\t*save: name\nHi!\n-- gtformat-enable\n';
+      const result = format(source);
+
+      // No blank lines inserted in disabled region
+      expect(result).toBe('-- gtformat-disable\n*question: Name?\n\t*save: name\nHi!\n-- gtformat-enable\n');
+    });
+
+    it('should clear deeper level tracking on dedent', () => {
+      // After dedenting back to level 0, deeper level info should be cleared
+      const source = '*if: x\n\t*if: y\n\t\tDeep\n*header: Next\n';
+      const result = format(source);
+
+      expect(result).toBe('*if: x\n\t*if: y\n\t\tDeep\n\n*header: Next\n');
+    });
+
+    it('should separate keyword blocks with bodies (*success/*error)', () => {
+      const source = '*service: API\n\t*method: PUT\n\t*send: data\n\t*success\n\t\t>> r = it\n\t*error\n\t\t>> e = 1\n';
+      const result = format(source);
+
+      expect(result).toBe('*service: API\n\t*method: PUT\n\t*send: data\n\t*success\n\t\t>> r = it\n\n\t*error\n\t\t>> e = 1\n');
+    });
+
+    it('should not insert blank line before comments', () => {
+      const source = '*question: Name?\n\t*save: name\n-- a comment\n*header: Next\n';
+      const result = format(source);
+
+      // Comment should not get a blank line before it, but *header should
+      expect(result).toBe('*question: Name?\n\t*save: name\n-- a comment\n\n*header: Next\n');
+    });
+  });
+
   describe('Formatter class', () => {
     it('should be instantiable with custom config', () => {
       const formatter = new Formatter({
