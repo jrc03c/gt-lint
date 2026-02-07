@@ -30,10 +30,10 @@ The language is designed to feel similar to Python. It uses _only_ tabs for inde
 
 The goal of this project is to produce a linter and formatter for the GuidedTrack language that mimics the functionalities of ESLint and Prettier for the web languages. It should be usable both at the command line and in IDEs (e.g., VSCode) via extensions.
 
-Ideally, it will be installable via NPM, like this:
+Ideally, it will be installable via NPM/pnpm, like this:
 
 ```bash
-npm install gt-lint
+pnpm add gt-lint
 ```
 
 And it should have a simple command line API that can be invoked with `npx` and look something like this:
@@ -180,7 +180,7 @@ Update the semantic version number in both package.json files and rebuild the VS
 # - /vscode-extension/package.json
 
 # After updating versions, rebuild the .vsix file:
-cd vscode-extension && npm run package
+cd vscode-extension && pnpm run package
 ```
 
 **Version bump guidelines (semver):**

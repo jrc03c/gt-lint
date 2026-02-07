@@ -6,7 +6,13 @@ A linter and formatter for the [GuidedTrack](https://guidedtrack.com) language, 
 
 ## Installation
 
-Install GTLint via npm:
+Install GTLint via pnpm:
+
+```bash
+pnpm add gt-lint
+```
+
+Or via npm:
 
 ```bash
 npm install gt-lint

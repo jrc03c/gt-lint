@@ -9,9 +9,9 @@
     "gtlint": "./bin/gtlint.js"
   },
   "scripts": {
-    "build": "tsc && npm run build:vscode && npm run package:vscode",
-    "build:vscode": "cd vscode-extension && npm run build",
-    "package:vscode": "cd vscode-extension && npm run package",
+    "build": "tsc && pnpm run build:vscode && pnpm run package:vscode",
+    "build:vscode": "cd vscode-extension && pnpm run build",
+    "package:vscode": "cd vscode-extension && pnpm run package",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "node bin/gtlint.js lint",
@@ -43,5 +43,6 @@
   "files": [
     "dist",
     "bin"
-  ]
+  ],
+  "packageManager": "pnpm@10.28.2"
 }
