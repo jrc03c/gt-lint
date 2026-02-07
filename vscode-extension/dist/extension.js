@@ -1440,6 +1440,9 @@ var DEFAULT_FORMATTER_CONFIG = {
   spaceAroundOperators: true,
   spaceAfterComma: true,
   spaceAroundArrow: true,
+  spaceInsideBraces: 0,
+  spaceInsideBrackets: 0,
+  spaceInsideParens: 0,
   trimTrailingWhitespace: true,
   insertFinalNewline: true
 };
@@ -1460,7 +1463,8 @@ var DEFAULT_LINTER_CONFIG = {
     "no-inline-argument": "error",
     "goto-needs-reset-in-events": "warn",
     "purchase-subkeyword-constraints": "error",
-    "correct-indentation": "error"
+    "correct-indentation": "error",
+    "no-duplicate-labels": "error"
   },
   format: DEFAULT_FORMATTER_CONFIG,
   ignore: ["**/node_modules/**", "**/dist/**"]
@@ -3614,6 +3618,75 @@ function walkAnswerOption(node, expectedIndent, lines, context) {
   walkStatements(node.body, expectedIndent + 1, lines, context);
 }
 
+// ../dist/linter/rules/no-duplicate-labels.js
+var noDuplicateLabels = {
+  name: "no-duplicate-labels",
+  description: "Disallow duplicate *label definitions",
+  severity: "error",
+  create(context) {
+    const labelDefinitions = [];
+    function collectLabels(node) {
+      if (!node || typeof node !== "object")
+        return;
+      if (node.type === "Program") {
+        for (const stmt of node.body) {
+          collectLabels(stmt);
+        }
+      } else if (node.type === "KeywordStatement") {
+        const kw = node;
+        if (kw.keyword === "label" && kw.argument) {
+          let labelName = "";
+          if (kw.argument.type === "TextContent") {
+            const text = kw.argument.parts.find((p) => typeof p === "string");
+            if (text) {
+              labelName = text.trim();
+            }
+          } else if (kw.argument.type === "Identifier") {
+            labelName = kw.argument.name;
+          }
+          if (labelName) {
+            labelDefinitions.push({
+              name: labelName,
+              line: kw.loc.start.line,
+              column: kw.loc.start.column
+            });
+          }
+        }
+        for (const stmt of kw.body) {
+          collectLabels(stmt);
+        }
+        for (const sub of kw.subKeywords) {
+          for (const stmt of sub.body) {
+            collectLabels(stmt);
+          }
+        }
+      } else if (node.type === "AnswerOption") {
+        for (const stmt of node.body) {
+          collectLabels(stmt);
+        }
+      }
+    }
+    return {
+      Program(node) {
+        collectLabels(node);
+        const seen = /* @__PURE__ */ new Map();
+        for (const label of labelDefinitions) {
+          const first = seen.get(label.name);
+          if (first) {
+            context.report({
+              message: `Duplicate label '${label.name}' (first defined on line ${first.line})`,
+              line: label.line,
+              column: label.column
+            });
+          } else {
+            seen.set(label.name, { line: label.line, column: label.column });
+          }
+        }
+      }
+    };
+  }
+};
+
 // ../dist/linter/rules/index.js
 var rules = {
   "no-undefined-vars": noUndefinedVars,
@@ -3631,7 +3704,8 @@ var rules = {
   "no-inline-argument": noInlineArgument,
   "goto-needs-reset-in-events": gotoNeedsResetInEvents,
   "purchase-subkeyword-constraints": purchaseSubkeywordConstraints,
-  "correct-indentation": correctIndentation
+  "correct-indentation": correctIndentation,
+  "no-duplicate-labels": noDuplicateLabels
 };
 
 // ../dist/linter/directives.js
@@ -4089,6 +4163,7 @@ var Formatter = class {
     if (content.trim() === "" || content.trim().startsWith("--")) {
       return line;
     }
+    const isTextLine = !content.startsWith(">>") && !content.startsWith("*");
     if (content.startsWith(">>")) {
       content = content.replace(/^>>\s*/, ">> ");
       content = this.formatExpression(content);
@@ -4096,7 +4171,7 @@ var Formatter = class {
     if (content.startsWith("*")) {
       content = this.formatKeywordLine(content);
     }
-    content = this.formatLiterals(content);
+    content = this.formatLiterals(content, isTextLine);
     return indent + content;
   }
   formatExpression(content) {
@@ -4180,7 +4255,22 @@ var Formatter = class {
     }
     return result;
   }
-  formatLiterals(content) {
+  getSpaceForBracket(bracket) {
+    switch (bracket) {
+      case "{":
+      case "}":
+        return this.config.spaceInsideBraces;
+      case "[":
+      case "]":
+        return this.config.spaceInsideBrackets;
+      case "(":
+      case ")":
+        return this.config.spaceInsideParens;
+      default:
+        return 0;
+    }
+  }
+  formatLiterals(content, isTextLine = false) {
     let result = "";
     let inString = false;
     let stringChar = "";
@@ -4216,9 +4306,27 @@ var Formatter = class {
         while (i + 1 < content.length && content[i + 1] === " ") {
           i++;
         }
+        const closingBracket = ch === "{" ? "}" : ch === "[" ? "]" : ")";
+        if (content[i + 1] !== closingBracket) {
+          const spaces = isTextLine ? 0 : this.getSpaceForBracket(ch);
+          if (spaces > 0) {
+            result += " ".repeat(spaces);
+          }
+        }
         continue;
       }
-      if (ch === " " && (next === "]" || next === ")" || next === "}")) {
+      if (ch === "]" || ch === ")" || ch === "}") {
+        while (result.length > 0 && result[result.length - 1] === " ") {
+          result = result.slice(0, -1);
+        }
+        const openingBracket = ch === "}" ? "{" : ch === "]" ? "[" : "(";
+        if (result.length > 0 && result[result.length - 1] !== openingBracket) {
+          const spaces = isTextLine ? 0 : this.getSpaceForBracket(ch);
+          if (spaces > 0) {
+            result += " ".repeat(spaces);
+          }
+        }
+        result += ch;
         continue;
       }
       result += ch;

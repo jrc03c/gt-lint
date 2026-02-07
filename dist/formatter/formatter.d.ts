@@ -6,6 +6,7 @@ export declare class Formatter {
     private formatLine;
     private formatExpression;
     private formatOperatorsOutsideStrings;
+    private getSpaceForBracket;
     private formatLiterals;
     private formatKeywordLine;
     private normalizeWhitespace;

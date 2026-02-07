@@ -2,6 +2,9 @@ export const DEFAULT_FORMATTER_CONFIG = {
     spaceAroundOperators: true,
     spaceAfterComma: true,
     spaceAroundArrow: true,
+    spaceInsideBraces: 0,
+    spaceInsideBrackets: 0,
+    spaceInsideParens: 0,
     trimTrailingWhitespace: true,
     insertFinalNewline: true,
 };
@@ -23,6 +26,7 @@ export const DEFAULT_LINTER_CONFIG = {
         'goto-needs-reset-in-events': 'warn',
         'purchase-subkeyword-constraints': 'error',
         'correct-indentation': 'error',
+        'no-duplicate-labels': 'error',
     },
     format: DEFAULT_FORMATTER_CONFIG,
     ignore: ['**/node_modules/**', '**/dist/**'],

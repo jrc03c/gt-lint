@@ -35,6 +35,9 @@ export interface FormatterConfig {
     spaceAroundOperators: boolean;
     spaceAfterComma: boolean;
     spaceAroundArrow: boolean;
+    spaceInsideBraces: number;
+    spaceInsideBrackets: number;
+    spaceInsideParens: number;
     trimTrailingWhitespace: boolean;
     insertFinalNewline: boolean;
 }

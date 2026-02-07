@@ -70,6 +70,8 @@ export class Formatter {
         if (content.trim() === '' || content.trim().startsWith('--')) {
             return line;
         }
+        // Determine if this is a text line (not an expression or keyword line)
+        const isTextLine = !content.startsWith('>>') && !content.startsWith('*');
         // Format expression lines (>> ...)
         if (content.startsWith('>>')) {
             // Ensure exactly one space after >>
@@ -81,7 +83,7 @@ export class Formatter {
             content = this.formatKeywordLine(content);
         }
         // Format array/object literals
-        content = this.formatLiterals(content);
+        content = this.formatLiterals(content, isTextLine);
         return indent + content;
     }
     formatExpression(content) {
@@ -181,7 +183,18 @@ export class Formatter {
         }
         return result;
     }
-    formatLiterals(content) {
+    getSpaceForBracket(bracket) {
+        switch (bracket) {
+            case '{':
+            case '}': return this.config.spaceInsideBraces;
+            case '[':
+            case ']': return this.config.spaceInsideBrackets;
+            case '(':
+            case ')': return this.config.spaceInsideParens;
+            default: return 0;
+        }
+    }
+    formatLiterals(content, isTextLine = false) {
         let result = '';
         let inString = false;
         let stringChar = '';
@@ -215,17 +228,40 @@ export class Formatter {
                 }
                 continue;
             }
-            // Cleanup extra spaces after opening brackets
+            // Handle opening brackets: normalize spaces after them
             if (ch === '[' || ch === '(' || ch === '{') {
                 result += ch;
-                // Skip all spaces after opening bracket
+                // Skip all existing spaces after opening bracket
                 while (i + 1 < content.length && content[i + 1] === ' ') {
                     i++;
                 }
+                // Find the matching closing bracket to check for empty pairs
+                const closingBracket = ch === '{' ? '}' : ch === '[' ? ']' : ')';
+                if (content[i + 1] !== closingBracket) {
+                    // On text lines, don't add spaces (braces are interpolation)
+                    const spaces = isTextLine ? 0 : this.getSpaceForBracket(ch);
+                    if (spaces > 0) {
+                        result += ' '.repeat(spaces);
+                    }
+                }
                 continue;
             }
-            // Cleanup extra spaces before closing brackets
-            if (ch === ' ' && (next === ']' || next === ')' || next === '}')) {
+            // Handle spaces before closing brackets: normalize them
+            if (ch === ']' || ch === ')' || ch === '}') {
+                // Remove any trailing spaces before the closing bracket
+                while (result.length > 0 && result[result.length - 1] === ' ') {
+                    result = result.slice(0, -1);
+                }
+                // Find the matching opening bracket to check for empty pairs
+                const openingBracket = ch === '}' ? '{' : ch === ']' ? '[' : '(';
+                if (result.length > 0 && result[result.length - 1] !== openingBracket) {
+                    // On text lines, don't add spaces (braces are interpolation)
+                    const spaces = isTextLine ? 0 : this.getSpaceForBracket(ch);
+                    if (spaces > 0) {
+                        result += ' '.repeat(spaces);
+                    }
+                }
+                result += ch;
                 continue;
             }
             result += ch;
