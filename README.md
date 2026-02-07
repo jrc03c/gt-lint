@@ -290,25 +290,52 @@ Configure the formatter in your `gtlint.config.js`:
 ```javascript
 export default {
   format: {
-    spaceAroundOperators: true,   // Spaces around =, +, -, etc.
-    spaceAfterComma: true,        // Space after commas in lists
-    spaceAroundArrow: true,       // Spaces around -> in associations
-    spaceInsideBraces: 0,         // Spaces inside { } (0 = no spaces)
-    spaceInsideBrackets: 0,       // Spaces inside [ ] (0 = no spaces)
-    spaceInsideParens: 0,         // Spaces inside ( ) (0 = no spaces)
-    trimTrailingWhitespace: true, // Remove trailing whitespace
-    insertFinalNewline: true,     // Ensure file ends with newline
+    spaceAroundOperators: true,       // Spaces around =, +, -, etc. (default: true)
+    spaceAfterComma: true,            // Space after commas in lists (default: true)
+    spaceAroundArrow: true,           // Spaces around -> in associations (default: true)
+    spaceInsideBraces: 0,             // Spaces inside { } (default: 0)
+    spaceInsideBrackets: 0,           // Spaces inside [ ] (default: 0)
+    spaceInsideParens: 0,             // Spaces inside ( ) (default: 0)
+    trimTrailingWhitespace: true,     // Remove trailing whitespace (default: true)
+    insertFinalNewline: true,         // Ensure file ends with newline (default: true)
   }
 };
 ```
 
-The `spaceInsideBraces`, `spaceInsideBrackets`, and `spaceInsideParens` options control the number of spaces inserted immediately inside paired delimiters. For example, with `spaceInsideBraces: 1`:
+### Spacing Options
 
+**Operator and delimiter spacing:**
+- `spaceAroundOperators` - Adds spaces around operators like `=`, `+`, `-`, `*`, `/`, etc.
+- `spaceAfterComma` - Adds a space after commas in lists and function arguments
+- `spaceAroundArrow` - Adds spaces around the `->` operator in object associations
+
+**Bracket padding:**
+- `spaceInsideBraces` - Number of spaces inside `{ }` braces
+- `spaceInsideBrackets` - Number of spaces inside `[ ]` brackets
+- `spaceInsideParens` - Number of spaces inside `( )` parentheses
+
+Each bracket type is independently configurable. Empty pairs (`{}`, `[]`, `()`) are never padded. String interpolation braces in text lines (`{variable}`) are unaffected by `spaceInsideBraces`.
+
+**Examples:**
+
+With `spaceInsideBraces: 1`:
 ```
->> person = { "name" -> "Alice" }
+>> person = { "name" -> "Alice", "age" -> 30 }
 ```
 
-Each bracket type is independently configurable. Empty pairs (`{}`, `[]`, `()`) are never padded. String interpolation braces in text lines (`{variable}`) are unaffected.
+With `spaceInsideBrackets: 1`:
+```
+>> numbers = [ 1, 2, 3, 4, 5 ]
+```
+
+With `spaceInsideParens: 1`:
+```
+>> result = calculate( x + y )
+```
+
+**Whitespace cleanup:**
+- `trimTrailingWhitespace` - Removes spaces and tabs at the end of lines
+- `insertFinalNewline` - Ensures the file ends with a newline character
 
 ## Example
 
