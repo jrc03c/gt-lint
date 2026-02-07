@@ -1437,7 +1437,6 @@ function parse(tokens) {
 
 // ../dist/types.js
 var DEFAULT_FORMATTER_CONFIG = {
-  blankLinesBetweenBlocks: 1,
   spaceAroundOperators: true,
   spaceAfterComma: true,
   spaceAroundArrow: true,
@@ -3958,8 +3957,6 @@ var Formatter = class {
   format(source) {
     const lines = source.split("\n");
     const formattedLines = [];
-    let previousLineWasBlank = false;
-    let previousLineWasTopLevel = false;
     let consecutiveBlankLines = 0;
     const directives = parseDirectives(source);
     for (let i = 0; i < lines.length; i++) {
@@ -3973,8 +3970,6 @@ var Formatter = class {
         } else {
           consecutiveBlankLines = 0;
         }
-        previousLineWasBlank = isBlank2;
-        previousLineWasTopLevel = !isBlank2 && !line.startsWith("	");
         continue;
       }
       if (this.config.trimTrailingWhitespace) {
@@ -3989,19 +3984,8 @@ var Formatter = class {
       } else {
         consecutiveBlankLines = 0;
       }
-      const isTopLevel = !isBlank && !line.startsWith("	");
-      if (this.config.blankLinesBetweenBlocks > 0) {
-        if (isTopLevel && previousLineWasTopLevel && !previousLineWasBlank && !isBlank) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("*") && !trimmed.startsWith("--")) {
-            formattedLines.push("");
-          }
-        }
-      }
       line = this.formatLine(line);
       formattedLines.push(line);
-      previousLineWasBlank = isBlank;
-      previousLineWasTopLevel = isTopLevel;
     }
     let result = formattedLines.join("\n");
     if (this.config.insertFinalNewline && !result.endsWith("\n")) {

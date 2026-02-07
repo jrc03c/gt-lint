@@ -1,5 +1,4 @@
 export const DEFAULT_FORMATTER_CONFIG = {
-    blankLinesBetweenBlocks: 1,
     spaceAroundOperators: true,
     spaceAfterComma: true,
     spaceAroundArrow: true,

@@ -41,7 +41,6 @@ module.exports = {
     'no-undefined-vars': 'error',
   },
   format: {
-    blankLinesBetweenBlocks: 1,
     spaceAroundOperators: true,
     trimTrailingWhitespace: true,
     insertFinalNewline: true,
@@ -71,7 +70,6 @@ module.exports = {
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `blankLinesBetweenBlocks` | number | `1` | Number of blank lines between blocks at any indentation level (inserted when a keyword block has children or content type transitions between keyword and non-keyword; set to 0 to disable) |
 | `spaceAroundOperators` | boolean | `true` | Add spaces around operators |
 | `spaceAfterComma` | boolean | `true` | Add space after commas |
 | `spaceAroundArrow` | boolean | `true` | Add spaces around arrow (`->`) |

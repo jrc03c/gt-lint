@@ -32,7 +32,6 @@ export interface LintResult {
     output?: string;
 }
 export interface FormatterConfig {
-    blankLinesBetweenBlocks: number;
     spaceAroundOperators: boolean;
     spaceAfterComma: boolean;
     spaceAroundArrow: boolean;

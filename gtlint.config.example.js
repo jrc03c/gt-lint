@@ -17,7 +17,6 @@ export default {
 
   // Formatter configuration
   format: {
-    blankLinesBetweenBlocks: 1,
     spaceAroundOperators: true,
     spaceAfterComma: true,
     spaceAroundArrow: true,

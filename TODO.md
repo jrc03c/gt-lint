@@ -27,7 +27,7 @@ Tasks and ideas for GTLint development.
 
 ## Formatter
 
-- [x] Blank line insertion now works at all indentation levels (not just top-level). Inserts blank lines when a keyword block has children or when content type transitions between keyword and non-keyword. Sub-keywords without children stay grouped. Comments are ignored (no blank line inserted before them). Controlled by `blankLinesBetweenBlocks` setting (set to 0 to disable).
+- [x] Blank line normalization: collapses multiple consecutive blank lines to at most one. Does not insert blank lines — the author controls blank line placement.
 
 ## Documentation
 

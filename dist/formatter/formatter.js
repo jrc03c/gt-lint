@@ -11,8 +11,6 @@ export class Formatter {
     format(source) {
         const lines = source.split('\n');
         const formattedLines = [];
-        let previousLineWasBlank = false;
-        let previousLineWasTopLevel = false;
         let consecutiveBlankLines = 0;
         // Parse directives to respect gtformat-disable regions
         const directives = parseDirectives(source);
@@ -22,7 +20,6 @@ export class Formatter {
             // Skip formatting if this line is in a disabled region
             if (isFormatDisabled(directives, lineNum)) {
                 formattedLines.push(line);
-                // Update state tracking for blank line handling
                 const isBlank = line.trim() === '';
                 if (isBlank) {
                     consecutiveBlankLines++;
@@ -30,8 +27,6 @@ export class Formatter {
                 else {
                     consecutiveBlankLines = 0;
                 }
-                previousLineWasBlank = isBlank;
-                previousLineWasTopLevel = !isBlank && !line.startsWith('\t');
                 continue;
             }
             // Trim trailing whitespace
@@ -50,24 +45,9 @@ export class Formatter {
             else {
                 consecutiveBlankLines = 0;
             }
-            // Check if current line is top-level (no indentation)
-            const isTopLevel = !isBlank && !line.startsWith('\t');
-            // Manage blank lines between blocks
-            if (this.config.blankLinesBetweenBlocks > 0) {
-                if (isTopLevel && previousLineWasTopLevel && !previousLineWasBlank && !isBlank) {
-                    // Check if this starts a new block (keyword at start of line)
-                    const trimmed = line.trim();
-                    if (trimmed.startsWith('*') && !trimmed.startsWith('--')) {
-                        // Add blank line before new top-level keyword block
-                        formattedLines.push('');
-                    }
-                }
-            }
             // Format the line content
             line = this.formatLine(line);
             formattedLines.push(line);
-            previousLineWasBlank = isBlank;
-            previousLineWasTopLevel = isTopLevel;
         }
         let result = formattedLines.join('\n');
         // Ensure final newline

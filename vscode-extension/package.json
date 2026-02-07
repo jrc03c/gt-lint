@@ -2,7 +2,7 @@
   "name": "gtlint-vscode",
   "displayName": "GTLint - GuidedTrack Linter",
   "description": "Linting, formatting, and code actions for GuidedTrack (.gt) files",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "gtlint",
   "engines": {
     "vscode": "^1.85.0"
@@ -86,10 +86,6 @@
           "default": {},
           "description": "Override format settings",
           "properties": {
-            "blankLinesBetweenBlocks": {
-              "type": "number",
-              "default": 1
-            },
             "spaceAroundOperators": {
               "type": "boolean",
               "default": true

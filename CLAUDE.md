@@ -89,8 +89,8 @@ The core infrastructure for GTLint is now in place:
 
 ### Formatter (`src/formatter/`)
 - Automatically formats GuidedTrack code
-- Configurable options for spacing, blank lines, trailing whitespace
-- Blank line insertion works at all indentation levels: inserts blank lines when a keyword block has indented children or when content type transitions between keyword and non-keyword; sibling sub-keywords without children stay grouped; comments are skipped
+- Configurable options for spacing, trailing whitespace, final newline
+- Normalizes blank lines: collapses multiple consecutive blank lines to at most one (does not insert blank lines — the author controls blank line placement)
 - Respects `gtformat-disable` and `gt-disable` directive regions
 
 ### CLI (`src/cli.ts`)

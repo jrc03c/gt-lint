@@ -37,7 +37,6 @@ export interface LintResult {
 }
 
 export interface FormatterConfig {
-  blankLinesBetweenBlocks: number;
   spaceAroundOperators: boolean;
   spaceAfterComma: boolean;
   spaceAroundArrow: boolean;
@@ -52,7 +51,6 @@ export interface LinterConfig {
 }
 
 export const DEFAULT_FORMATTER_CONFIG: FormatterConfig = {
-  blankLinesBetweenBlocks: 1,
   spaceAroundOperators: true,
   spaceAfterComma: true,
   spaceAroundArrow: true,
