@@ -7,6 +7,23 @@ import {
   DEFAULT_FORMATTER_CONFIG,
 } from 'gt-lint';
 
+/**
+ * Convert camelCase to kebab-case (e.g., noUnusedVars → no-unused-vars).
+ */
+function camelToKebab(str: string): string {
+  return str.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
+}
+
+function normalizeRuleKeys(
+  rules: Record<string, string>
+): Record<string, string> {
+  const normalized: Record<string, string> = {};
+  for (const [key, value] of Object.entries(rules)) {
+    normalized[camelToKebab(key)] = value;
+  }
+  return normalized;
+}
+
 export interface GTLintSettings {
   enable: boolean;
   lintOnType: boolean;
@@ -99,7 +116,7 @@ export async function getConfigForDocument(document: vscode.TextDocument): Promi
     const fileConfig = await loadConfigFile(configPath);
     if (fileConfig) {
       if (fileConfig.rules) {
-        rules = { ...rules, ...fileConfig.rules };
+        rules = { ...rules, ...normalizeRuleKeys(fileConfig.rules) };
       }
       if (fileConfig.format) {
         format = { ...format, ...fileConfig.format };
@@ -108,7 +125,7 @@ export async function getConfigForDocument(document: vscode.TextDocument): Promi
   }
 
   // Apply VSCode settings (override config file)
-  rules = { ...rules, ...vscodeSettings.rules };
+  rules = { ...rules, ...normalizeRuleKeys(vscodeSettings.rules) };
   format = { ...format, ...vscodeSettings.format };
 
   const linterConfig: LinterConfig = {

@@ -4,15 +4,16 @@
 export default {
   // Lint rules configuration
   // Values: 'error', 'warn', 'off'
+  // Rule names use camelCase in config files (kebab-case is also accepted)
   rules: {
-    'no-undefined-vars': 'error',
-    'no-unused-vars': 'warn',
-    'valid-keyword': 'error',
-    'valid-sub-keyword': 'error',
-    'no-invalid-goto': 'error',
-    'indent-style': 'error',
-    'no-unclosed-string': 'error',
-    'no-unclosed-bracket': 'error',
+    noUndefinedVars: 'error',
+    noUnusedVars: 'warn',
+    validKeyword: 'error',
+    validSubKeyword: 'error',
+    noInvalidGoto: 'error',
+    indentStyle: 'error',
+    noUnclosedString: 'error',
+    noUnclosedBracket: 'error',
   },
 
   // Formatter configuration

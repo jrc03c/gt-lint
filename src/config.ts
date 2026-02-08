@@ -4,6 +4,29 @@ import { pathToFileURL } from 'url';
 import type { LinterConfig, FormatterConfig } from './types.js';
 import { DEFAULT_LINTER_CONFIG, DEFAULT_FORMATTER_CONFIG } from './types.js';
 
+/**
+ * Convert camelCase to kebab-case (e.g., noUnusedVars → no-unused-vars).
+ * Strings that are already kebab-case pass through unchanged.
+ */
+function camelToKebab(str: string): string {
+  return str.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
+}
+
+/**
+ * Normalize rule keys from camelCase (config file convention) to
+ * kebab-case (internal convention). Keys already in kebab-case are
+ * unaffected.
+ */
+function normalizeRuleKeys(
+  rules: Record<string, string>
+): Record<string, string> {
+  const normalized: Record<string, string> = {};
+  for (const [key, value] of Object.entries(rules)) {
+    normalized[camelToKebab(key)] = value;
+  }
+  return normalized;
+}
+
 export interface GTLintConfig {
   rules?: LinterConfig['rules'];
   format?: Partial<FormatterConfig>;
@@ -70,7 +93,7 @@ export function mergeConfig(userConfig: GTLintConfig): {
     ...DEFAULT_LINTER_CONFIG,
     rules: {
       ...DEFAULT_LINTER_CONFIG.rules,
-      ...userConfig.rules,
+      ...(userConfig.rules ? normalizeRuleKeys(userConfig.rules) : {}),
     },
     format: {
       ...DEFAULT_LINTER_CONFIG.format,

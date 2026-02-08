@@ -106,23 +106,26 @@ Create a `gtlint.config.js` file in your project root to customize GTLint behavi
 
 ```javascript
 export default {
+  // Rule names use camelCase in config files (kebab-case is also accepted)
   rules: {
-    "indent-style": "error",
-    "no-undefined-vars": "error",
-    "no-unused-vars": "warn",
-    "no-invalid-goto": "error",
-    "no-duplicate-labels": "error",
-    "valid-keyword": "error",
-    "valid-sub-keyword": "error",
-    "no-unclosed-string": "error",
-    "no-unclosed-bracket": "error",
-    "no-single-quotes": "warn",
-    "correct-indentation": "error",
+    indentStyle: "error",
+    noUndefinedVars: "error",
+    noUnusedVars: "warn",
+    noInvalidGoto: "error",
+    noDuplicateLabels: "error",
+    validKeyword: "error",
+    validSubKeyword: "error",
+    noUnclosedString: "error",
+    noUnclosedBracket: "error",
+    noSingleQuotes: "warn",
+    correctIndentation: "error",
   },
-  formatter: {
-    removeTrailingWhitespace: true,
-    ensureNewlineAtEndOfFile: true,
-    maxConsecutiveBlankLines: 2,
+  format: {
+    spaceAroundOperators: true,
+    spaceAfterComma: true,
+    spaceAroundArrow: true,
+    trimTrailingWhitespace: true,
+    insertFinalNewline: true,
   },
 }
 ```
@@ -223,6 +226,8 @@ You can disable linting and/or formatting for specific lines or sections using i
 | `-- @gtformat-enable`  | Re-enable formatting                              |
 
 Note: `@gtformat-*` directives don't support rule lists since formatting isn't rule-based.
+
+Note: Inline directive rule names always use kebab-case (e.g., `no-unused-vars`), even though config files use camelCase.
 
 ## Declaring Program APIs
 

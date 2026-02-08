@@ -4404,6 +4404,16 @@ var Formatter = class {
 };
 
 // src/configuration.ts
+function camelToKebab(str) {
+  return str.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
+}
+function normalizeRuleKeys(rules2) {
+  const normalized = {};
+  for (const [key, value] of Object.entries(rules2)) {
+    normalized[camelToKebab(key)] = value;
+  }
+  return normalized;
+}
 var CONFIG_FILENAMES = ["gtlint.config.js", "gtlint.config.mjs"];
 function getVSCodeSettings() {
   const config = vscode.workspace.getConfiguration("gtlint");
@@ -4454,14 +4464,14 @@ async function getConfigForDocument(document) {
     const fileConfig = await loadConfigFile(configPath);
     if (fileConfig) {
       if (fileConfig.rules) {
-        rules2 = { ...rules2, ...fileConfig.rules };
+        rules2 = { ...rules2, ...normalizeRuleKeys(fileConfig.rules) };
       }
       if (fileConfig.format) {
         format2 = { ...format2, ...fileConfig.format };
       }
     }
   }
-  rules2 = { ...rules2, ...vscodeSettings.rules };
+  rules2 = { ...rules2, ...normalizeRuleKeys(vscodeSettings.rules) };
   format2 = { ...format2, ...vscodeSettings.format };
   const linterConfig = {
     rules: rules2,

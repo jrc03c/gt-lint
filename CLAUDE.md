@@ -153,6 +153,7 @@ The core infrastructure for GTLint is now in place:
 10. **`*program:` returns**: `*program:` calls a subprogram and returns (unlike `*goto:` which transfers control)
 11. **Text formatting**: Bold (`*text*`) and italic (`/text/`) formatting in visible text contexts only
 12. **Context-aware lexing**: Formatting markers are context-aware - disabled in URL/path keywords to avoid conflicts with file paths
+13. **Config file convention**: Rule names in config files use camelCase (e.g., `noUnusedVars`), while internally and in inline directives they use kebab-case (e.g., `no-unused-vars`). A normalization layer in `src/config.ts` converts camelCase to kebab-case at the config-loading boundary. Both conventions are accepted in config files for backward compatibility.
 
 ## Reference Files
 
