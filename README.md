@@ -175,7 +175,7 @@ You can disable linting and/or formatting for specific lines or sections using i
 
 ```
 -- Disable specific lint rule for next line
--- @@gtlint-disable-next-line no-unused-vars
+-- @gtlint-disable-next-line no-unused-vars
 >> temp_variable = 42
 
 -- Disable all linting in a region
@@ -204,8 +204,8 @@ You can disable linting and/or formatting for specific lines or sections using i
 | -------------------------------------- | -------------------------------------------------- |
 | `-- @gt-disable`                        | Disable lint + format until `@gt-enable` or EOF     |
 | `-- @gt-enable`                         | Re-enable lint + format                            |
-| `-- @@gt-disable-next-line`              | Disable lint + format for next line only           |
-| `-- @@gt-disable-next-line rule1, rule2` | Disable specific lint rules + format for next line |
+| `-- @gt-disable-next-line`               | Disable lint + format for next line only           |
+| `-- @gt-disable-next-line rule1, rule2`  | Disable specific lint rules + format for next line |
 
 **Lint-only:**
 
@@ -215,8 +215,8 @@ You can disable linting and/or formatting for specific lines or sections using i
 | `-- @gtlint-disable rule1, rule2`           | Disable specific lint rules                         |
 | `-- @gtlint-enable`                         | Re-enable all lint rules                            |
 | `-- @gtlint-enable rule1`                   | Re-enable specific lint rule                        |
-| `-- @@gtlint-disable-next-line`              | Disable all lint rules for next line                |
-| `-- @@gtlint-disable-next-line rule1, rule2` | Disable specific rules for next line                |
+| `-- @gtlint-disable-next-line`               | Disable all lint rules for next line                |
+| `-- @gtlint-disable-next-line rule1, rule2`  | Disable specific rules for next line                |
 
 **Format-only:**
 

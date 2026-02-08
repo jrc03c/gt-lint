@@ -384,8 +384,8 @@ Control linting and formatting behavior with special comments. Three prefix type
 ```guidedtrack
 -- @gt-disable                    -- Disable lint + format until @gt-enable or EOF
 -- @gt-enable                     -- Re-enable lint + format
--- @@gt-disable-next-line          -- Disable lint + format for next line only
--- @@gt-disable-next-line rule1    -- Disable specific lint rules + format for next line
+-- @gt-disable-next-line           -- Disable lint + format for next line only
+-- @gt-disable-next-line rule1     -- Disable specific lint rules + format for next line
 ```
 
 **Lint-only directives**:
@@ -394,8 +394,8 @@ Control linting and formatting behavior with special comments. Three prefix type
 -- @gtlint-disable rule1, rule2   -- Disable specific lint rules
 -- @gtlint-enable                 -- Re-enable all lint rules
 -- @gtlint-enable rule1           -- Re-enable specific lint rule
--- @@gtlint-disable-next-line      -- Disable all lint rules for next line
--- @@gtlint-disable-next-line rule1, rule2  -- Disable specific rules for next line
+-- @gtlint-disable-next-line       -- Disable all lint rules for next line
+-- @gtlint-disable-next-line rule1, rule2  -- Disable specific rules for next line
 ```
 
 **Format-only directives**:
