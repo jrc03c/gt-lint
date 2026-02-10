@@ -141,15 +141,15 @@ describe('valid-subkeyword-value rule', () => {
     const result = linter.lint(`
 *service: My API
 	*path: /test
-	*method: PATCH
+	*method: SEND
 	*success
 		>> x = 1
 	*error
 		>> x = 2
 `);
     expect(result.messages).toHaveLength(1);
-    expect(result.messages[0].message).toContain("Invalid value 'PATCH'");
-    expect(result.messages[0].message).toContain('GET, POST, PUT, DELETE');
+    expect(result.messages[0].message).toContain("Invalid value 'SEND'");
+    expect(result.messages[0].message).toContain('CONNECT, DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT, TRACE');
   });
 
   it('should report invalid yes-no value', () => {

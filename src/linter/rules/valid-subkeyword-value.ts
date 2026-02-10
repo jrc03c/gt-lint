@@ -13,7 +13,7 @@ import { getKeywordSpec } from '../../language/keyword-spec.js';
  * Examples of violations:
  * - `*chart:` with `*type: pie` (not a valid chart type)
  * - `*question:` with `*type: dropdown` (not a valid question type)
- * - `*service:` with `*method: PATCH` (not a valid method)
+ * - `*service:` with `*method: SEND` (not a valid method)
  */
 export const validSubkeywordValue: LintRule = {
   name: 'valid-subkeyword-value',
