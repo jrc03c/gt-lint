@@ -259,6 +259,55 @@ describe('Linter', () => {
     });
   });
 
+  describe('no-unused-labels rule', () => {
+    it('should report warning for label with no goto', () => {
+      const source = `*label: orphan`;
+      const result = lint(source);
+
+      const msgs = result.messages.filter(m => m.ruleId === 'no-unused-labels');
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].severity).toBe('warning');
+      expect(msgs[0].message).toContain("Label 'orphan' is defined but never used by a *goto");
+    });
+
+    it('should not warn when label is referenced by a goto', () => {
+      const source = `*label: start
+*goto: start`;
+      const result = lint(source);
+
+      const msgs = result.messages.filter(m => m.ruleId === 'no-unused-labels');
+      expect(msgs).toHaveLength(0);
+    });
+
+    it('should detect unused labels inside nested blocks', () => {
+      const source = `*if: 1
+\t*label: nested`;
+      const result = lint(source);
+
+      const msgs = result.messages.filter(m => m.ruleId === 'no-unused-labels');
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].message).toContain("Label 'nested'");
+    });
+
+    it('should not flag used label inside nested block', () => {
+      const source = `*if: 1
+\t*label: inner
+*goto: inner`;
+      const result = lint(source);
+
+      const msgs = result.messages.filter(m => m.ruleId === 'no-unused-labels');
+      expect(msgs).toHaveLength(0);
+    });
+
+    it('should be configurable to off', () => {
+      const source = `*label: unused`;
+      const result = lint(source, { rules: { 'no-unused-labels': 'off' } });
+
+      const msgs = result.messages.filter(m => m.ruleId === 'no-unused-labels');
+      expect(msgs).toHaveLength(0);
+    });
+  });
+
   describe('indent-style rule', () => {
     it('should report error for space indentation', () => {
       const source = `*if: true

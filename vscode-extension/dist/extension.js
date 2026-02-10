@@ -1464,7 +1464,8 @@ var DEFAULT_LINTER_CONFIG = {
     "goto-needs-reset-in-events": "warn",
     "purchase-subkeyword-constraints": "error",
     "correct-indentation": "error",
-    "no-duplicate-labels": "error"
+    "no-duplicate-labels": "error",
+    "no-unused-labels": "warn"
   },
   format: DEFAULT_FORMATTER_CONFIG,
   ignore: ["**/node_modules/**", "**/dist/**"]
@@ -3687,6 +3688,78 @@ var noDuplicateLabels = {
   }
 };
 
+// ../dist/linter/rules/no-unused-labels.js
+var noUnusedLabels = {
+  name: "no-unused-labels",
+  description: "Detect labels that are never referenced by a *goto",
+  severity: "warning",
+  create(context) {
+    const labelDefinitions = [];
+    const gotoTargets = /* @__PURE__ */ new Set();
+    function collect(node) {
+      if (!node || typeof node !== "object")
+        return;
+      if (node.type === "Program") {
+        for (const stmt of node.body) {
+          collect(stmt);
+        }
+      } else if (node.type === "KeywordStatement") {
+        const kw = node;
+        if (kw.argument) {
+          let name = "";
+          if (kw.argument.type === "TextContent") {
+            const text = kw.argument.parts.find((p) => typeof p === "string");
+            if (text) {
+              name = text.trim();
+            }
+          } else if (kw.argument.type === "Identifier") {
+            name = kw.argument.name;
+          }
+          if (name) {
+            if (kw.keyword === "label") {
+              labelDefinitions.push({
+                name,
+                line: kw.loc.start.line,
+                column: kw.loc.start.column
+              });
+            } else if (kw.keyword === "goto") {
+              if (!name.startsWith("http://") && !name.startsWith("https://")) {
+                gotoTargets.add(name);
+              }
+            }
+          }
+        }
+        for (const stmt of kw.body) {
+          collect(stmt);
+        }
+        for (const sub of kw.subKeywords) {
+          for (const stmt of sub.body) {
+            collect(stmt);
+          }
+        }
+      } else if (node.type === "AnswerOption") {
+        for (const stmt of node.body) {
+          collect(stmt);
+        }
+      }
+    }
+    return {
+      Program(node) {
+        collect(node);
+        for (const label of labelDefinitions) {
+          if (!gotoTargets.has(label.name)) {
+            context.report({
+              message: `Label '${label.name}' is defined but never used by a *goto`,
+              line: label.line,
+              column: label.column
+            });
+          }
+        }
+      }
+    };
+  }
+};
+
 // ../dist/linter/rules/index.js
 var rules = {
   "no-undefined-vars": noUndefinedVars,
@@ -3705,7 +3778,8 @@ var rules = {
   "goto-needs-reset-in-events": gotoNeedsResetInEvents,
   "purchase-subkeyword-constraints": purchaseSubkeywordConstraints,
   "correct-indentation": correctIndentation,
-  "no-duplicate-labels": noDuplicateLabels
+  "no-duplicate-labels": noDuplicateLabels,
+  "no-unused-labels": noUnusedLabels
 };
 
 // ../dist/linter/directives.js

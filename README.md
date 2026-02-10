@@ -146,6 +146,7 @@ GTLint includes the following linting rules:
 - **`no-unused-vars`** - Warns about variables that are defined but never used
 - **`no-invalid-goto`** - Ensures `*goto:` statements reference valid `*label:` targets
 - **`no-duplicate-labels`** - Detects duplicate `*label:` definitions within a program
+- **`no-unused-labels`** - Warns about `*label:` definitions that are never referenced by a `*goto`
 
 ### Syntax Validation
 

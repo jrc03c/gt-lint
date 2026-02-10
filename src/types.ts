@@ -83,6 +83,7 @@ export const DEFAULT_LINTER_CONFIG: LinterConfig = {
     'purchase-subkeyword-constraints': 'error',
     'correct-indentation': 'error',
     'no-duplicate-labels': 'error',
+    'no-unused-labels': 'warn',
   },
   format: DEFAULT_FORMATTER_CONFIG,
   ignore: ['**/node_modules/**', '**/dist/**'],

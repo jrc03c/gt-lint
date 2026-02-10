@@ -15,6 +15,7 @@ import { gotoNeedsResetInEvents } from './goto-needs-reset-in-events.js';
 import { purchaseSubkeywordConstraints } from './purchase-subkeyword-constraints.js';
 import { correctIndentation } from './correct-indentation.js';
 import { noDuplicateLabels } from './no-duplicate-labels.js';
+import { noUnusedLabels } from './no-unused-labels.js';
 export const rules = {
     'no-undefined-vars': noUndefinedVars,
     'no-unused-vars': noUnusedVars,
@@ -33,6 +34,7 @@ export const rules = {
     'purchase-subkeyword-constraints': purchaseSubkeywordConstraints,
     'correct-indentation': correctIndentation,
     'no-duplicate-labels': noDuplicateLabels,
+    'no-unused-labels': noUnusedLabels,
 };
 export function getRule(name) {
     return rules[name];
