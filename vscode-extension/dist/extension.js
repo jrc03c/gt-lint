@@ -2835,6 +2835,11 @@ var KEYWORD_SPECS = {
         required: false,
         valueType: "url",
         description: "Image for answer option"
+      },
+      classes: {
+        required: false,
+        valueType: "text",
+        description: "CSS class names to apply"
       }
     }
   },
