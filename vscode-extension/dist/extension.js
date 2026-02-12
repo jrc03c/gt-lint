@@ -4697,12 +4697,12 @@ function toSeverity(severity) {
 }
 function toDiagnostic(message, document) {
   const startLine = Math.max(0, message.line - 1);
-  const startColumn = message.column;
+  const startColumn = Math.max(0, message.column - 1);
   let endLine = startLine;
   let endColumn = startColumn + 1;
   if (message.endLine !== void 0 && message.endColumn !== void 0) {
     endLine = Math.max(0, message.endLine - 1);
-    endColumn = message.endColumn;
+    endColumn = Math.max(0, message.endColumn - 1);
   } else {
     const line = document.lineAt(startLine);
     const lineText = line.text;
@@ -4851,9 +4851,9 @@ var GTLintCodeActionProvider = class {
   }
   getMessageRange(message, document) {
     const startLine = Math.max(0, message.line - 1);
-    const startColumn = message.column;
+    const startColumn = Math.max(0, message.column - 1);
     const endLine = message.endLine !== void 0 ? Math.max(0, message.endLine - 1) : startLine;
-    const endColumn = message.endColumn !== void 0 ? message.endColumn : startColumn + 1;
+    const endColumn = message.endColumn !== void 0 ? Math.max(0, message.endColumn - 1) : startColumn + 1;
     return new vscode4.Range(
       new vscode4.Position(startLine, startColumn),
       new vscode4.Position(endLine, endColumn)

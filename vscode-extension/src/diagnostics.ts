@@ -25,12 +25,12 @@ function toSeverity(severity: 'error' | 'warning' | 'info'): vscode.DiagnosticSe
 /**
  * Convert LintMessage to VSCode Diagnostic
  * Note: LintMessage.line is 1-indexed, VSCode Range is 0-indexed
- * Note: LintMessage.column is 0-indexed, same as VSCode
+ * Note: LintMessage.line and LintMessage.column are both 1-indexed; VSCode Range is 0-indexed
  */
 function toDiagnostic(message: LintMessage, document: vscode.TextDocument): vscode.Diagnostic {
-  // Convert 1-indexed line to 0-indexed
+  // Convert 1-indexed line/column to 0-indexed
   const startLine = Math.max(0, message.line - 1);
-  const startColumn = message.column;
+  const startColumn = Math.max(0, message.column - 1);
 
   // Calculate end position
   let endLine = startLine;
@@ -38,7 +38,7 @@ function toDiagnostic(message: LintMessage, document: vscode.TextDocument): vsco
 
   if (message.endLine !== undefined && message.endColumn !== undefined) {
     endLine = Math.max(0, message.endLine - 1);
-    endColumn = message.endColumn;
+    endColumn = Math.max(0, message.endColumn - 1);
   } else {
     // If no end position, extend to end of word or reasonable default
     const line = document.lineAt(startLine);

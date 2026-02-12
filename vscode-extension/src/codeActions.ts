@@ -76,9 +76,9 @@ export class GTLintCodeActionProvider implements vscode.CodeActionProvider {
 
   private getMessageRange(message: LintMessage, document: vscode.TextDocument): vscode.Range {
     const startLine = Math.max(0, message.line - 1);
-    const startColumn = message.column;
+    const startColumn = Math.max(0, message.column - 1);
     const endLine = message.endLine !== undefined ? Math.max(0, message.endLine - 1) : startLine;
-    const endColumn = message.endColumn !== undefined ? message.endColumn : startColumn + 1;
+    const endColumn = message.endColumn !== undefined ? Math.max(0, message.endColumn - 1) : startColumn + 1;
 
     return new vscode.Range(
       new vscode.Position(startLine, startColumn),
