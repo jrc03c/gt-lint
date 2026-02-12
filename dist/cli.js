@@ -18,8 +18,7 @@ Lint Options:
   --format <type>      Output format: stylish (default), json, compact
 
 Format Options:
-  --check              Check formatting without modifying files
-  --write              Format and write back to files (default)
+  --write              Format and write back to files
 
 Common Options:
   --config <path>      Path to config file
@@ -30,7 +29,7 @@ Examples:
   gtlint lint .                    Lint all .gt files in current directory
   gtlint lint src/                 Lint all .gt files in src directory
   gtlint lint program.gt           Lint a specific file
-  gtlint format --check .          Check if files are formatted
+  gtlint format .                  Print formatted output to stdout
   gtlint format --write .          Format all files in place
 `);
 }
@@ -49,9 +48,6 @@ function parseArgs(args) {
         }
         else if (arg === '--config' && args[i + 1]) {
             options.config = args[++i];
-        }
-        else if (arg === '--check') {
-            options.check = true;
         }
         else if (arg === '--write') {
             options.write = true;
@@ -193,35 +189,23 @@ async function runFormat(files, options) {
         return 0;
     }
     const formatter = new Formatter(formatterConfig);
-    let hasChanges = false;
-    const changedFiles = [];
+    let changedCount = 0;
     for (const filePath of filePaths) {
         const source = readFileSync(filePath, 'utf-8');
         const formatted = formatter.format(source);
         const relativePath = relative(cwd, filePath);
-        if (source !== formatted) {
-            hasChanges = true;
-            changedFiles.push(relativePath);
-            if (!options.check) {
+        if (options.write) {
+            if (source !== formatted) {
                 writeFileSync(filePath, formatted, 'utf-8');
+                changedCount++;
                 console.log(`Formatted: ${relativePath}`);
             }
         }
-    }
-    if (options.check) {
-        if (hasChanges) {
-            console.log('The following files would be reformatted:');
-            for (const file of changedFiles) {
-                console.log(`  ${file}`);
-            }
-            return 1;
-        }
         else {
-            console.log('All files are properly formatted');
-            return 0;
+            process.stdout.write(formatted);
         }
     }
-    if (!hasChanges) {
+    if (options.write && changedCount === 0) {
         console.log('All files are already properly formatted');
     }
     return 0;
