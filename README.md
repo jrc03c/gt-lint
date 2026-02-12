@@ -2,9 +2,13 @@
 
 **GTLint** is linter, formatter, and syntax highlighter for the [GuidedTrack](https://guidedtrack.com) language, inspired by ESLint and Prettier. It can be used at the command line or installed as a VSCode extension.
 
-## Command Line
+# Disclaimer
 
-### Installation
+This tool was written almost exclusively by [Claude Code](https://claude.com/product/claude-code). [Josh Castle](https://github.com/jrc03c) directed Claude Code and made a few small changes to `CLAUDE.md`, `README.md`, and the GuidedTrack files in the `samples` directory; but GTLint itself was written entirely by Claude Code.
+
+# Command Line
+
+## Installation
 
 > **NOTE:** Requires [Node](https://nodejs.org/en).
 
@@ -20,7 +24,7 @@ Or globally:
 npm install -g @jrc03c/gt-lint
 ```
 
-### Usage
+## Usage
 
 > **NOTE:** When installed in a specific project, GTLint must be invoked with `npx gt-lint`. When installed globally, it can be invoked with just `gt-lint`. The examples below assume that it has been installed in a specific project.
 
@@ -60,9 +64,9 @@ npx gt-lint format path/to/some-file.gt
 npx gt-lint format path/to/some-dir
 ```
 
-## VSCode extension
+# VSCode extension
 
-### Installation
+## Installation
 
 (1) Download the [`vscode-extension/dist/gt-lint.vsix`](https://github.com/jrc03c/gt-lint/blob/main/vscode-extension/dist/gt-lint.vsix) file.
 
@@ -72,13 +76,13 @@ npx gt-lint format path/to/some-dir
 
 (3) Select the `gt-lint.vsix` file you downloaded.
 
-### Usage
+## Usage
 
 The linter works while you write code in `.gt` files and will show errors as soon as it detects them.
 
 The formatter will format code in `.gt` files on save.
 
-## Configuration
+# Configuration
 
 The linter's and formatter's default behaviors can be controlled by settings in a `gtlint.config.js` file at the root of a repository. Here's a sample configuration file containing all of the default values:
 
@@ -157,6 +161,6 @@ The linter's and formatter's behaviors can also be overridden by inline _directi
 
 > **NOTE:** `@gtformat-*` directives don't support rule lists since formatting isn't rule-based.
 
-## License
+# License
 
 MIT
