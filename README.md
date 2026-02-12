@@ -1,429 +1,161 @@
-# GTLint
+# Intro
 
-A linter and formatter for the [GuidedTrack](https://guidedtrack.com) language, inspired by ESLint and Prettier. Can be used at the command line or installed as a VSCode extension.
+**GTLint** is linter, formatter, and syntax highlighter for the [GuidedTrack](https://guidedtrack.com) language, inspired by ESLint and Prettier. It can be used at the command line or installed as a VSCode extension.
 
-## Installation
+## Command Line
 
-Install GTLint via pnpm:
+### Installation
 
-```bash
-pnpm add @jrc03c/gt-lint
-```
+> **NOTE:** Requires [Node](https://nodejs.org/en).
 
-Or via npm:
+In a specific project:
 
 ```bash
-npm install @jrc03c/gt-lint
+npm install --save-dev @jrc03c/gt-lint
 ```
 
-Or use it directly with npx:
+Or globally:
 
 ```bash
-npx gt-lint --help
+npm install -g @jrc03c/gt-lint
 ```
 
-## Usage
+### Usage
 
-### Command Line
+> **NOTE:** When installed in a specific project, GTLint must be invoked with `npx gt-lint`. When installed globally, it can be invoked with just `gt-lint`. The examples below assume that it has been installed in a specific project.
 
-GTLint provides two main commands: `lint` and `format`.
+**Syntax:**
 
-#### Linting
+```
+# lint:
+npx gt-lint lint [options] [files]
 
-Check your GuidedTrack code for errors and style issues:
+# format:
+npx gt-lint format [options] [files]
+```
+
+**Show help:**
 
 ```bash
-npx gtlint lint [options] [paths...]
+npx gt-lint
 ```
 
-**Examples:**
+**Lint:**
 
 ```bash
-# Lint a single file
-npx gtlint lint program.gt
+# show errors and warnings in a particular file
+npx gt-lint lint path/to/some-file.gt
 
-# Lint all .gt files in a directory
-npx gtlint lint src/
-
-# Lint multiple files using glob patterns
-npx gtlint lint "src/**/*.gt"
-
-# Lint with a specific config file
-npx gtlint lint --config custom-config.js src/
+# show all errors and warnings in all *.gt files in a directory (recursive)
+npx gt-lint lint path/to/some-dir
 ```
 
-**Options:**
-
-- `--config <path>` - Specify a configuration file (default: `gtlint.config.js`)
-- `--fix` - Automatically fix problems where possible
-
-#### Formatting
-
-Automatically format your GuidedTrack code:
+**Format:**
 
 ```bash
-npx gtlint format [options] [paths...]
+# format a specific file
+npx gt-lint format path/to/some-file.gt
+
+# format all *.gt files in a directory (recursive)
+npx gt-lint format path/to/some-dir
 ```
 
-**Examples:**
+## VSCode extension
 
-```bash
-# Format a single file
-npx gtlint format program.gt
+### Installation
 
-# Format all .gt files in a directory
-npx gtlint format src/
+(1) Download the [`vscode-extension/dist/gt-lint.vsix`](https://github.com/jrc03c/gt-lint/blob/main/vscode-extension/dist/gt-lint.vsix) file.
 
-# Check formatting without making changes
-npx gtlint format --check "src/**/*.gt"
-```
+(2) In VSCode, navigate to the Extensions pane, click on the tri-dot menu, and select "Install from VSIX...".
 
-**Options:**
+![](https://github.com/user-attachments/assets/f1ec5ba1-9027-475d-b9a8-29666d5d26fc)
 
-- `--config <path>` - Specify a configuration file
-- `--check` - Check if files are formatted without making changes
-- `--write` - Write formatted output to files (default behavior)
+(3) Select the `gt-lint.vsix` file you downloaded.
 
-### VSCode Extension
+### Usage
 
-GTLint provides a VSCode extension for an integrated development experience:
+The linter works while you write code in `.gt` files and will show errors as soon as it detects them.
 
-1. Install the extension:
-   ```bash
-   code --install-extension vscode-extension/dist/gt-lint.vsix
-   ```
-2. Open any `.gt` file to see syntax highlighting
-   - Bold text (`*text*`) renders in bold
-   - Italic text (`/text/`) renders in italics
-   - Context-aware: formatting disabled in URL/path keywords
-   - `*html` blocks get full HTML syntax highlighting, IntelliSense, and auto-closing tags via VSCode's built-in HTML support
-3. Linting diagnostics appear automatically in the editor
-4. Errors and warnings are underlined in your code
-5. Directive autocompletions: type `-- @` in a comment to see all available directives, and after a directive that accepts rule names (e.g., `-- @gtlint-disable `), get completions for all lint rule names
+The formatter will format code in `.gt` files on save.
 
 ## Configuration
 
-Create a `gtlint.config.js` file in your project root to customize GTLint behavior:
+The linter's and formatter's default behaviors can be controlled by settings in a `gtlint.config.js` file at the root of a repository. Here's a sample configuration file containing all of the default values:
 
-```javascript
+```js
 export default {
-  // Rule names use camelCase in config files (kebab-case is also accepted)
-  rules: {
-    indentStyle: "error",
-    noUndefinedVars: "error",
-    noUnusedVars: "warn",
-    noInvalidGoto: "error",
-    noDuplicateLabels: "error",
-    validKeyword: "error",
-    validSubKeyword: "error",
-    noUnclosedString: "error",
-    noUnclosedBracket: "error",
-    noSingleQuotes: "warn",
-    correctIndentation: "error",
-  },
+  // formatter settings
   format: {
-    spaceAroundOperators: true,
+    insertFinalNewline: true,
     spaceAfterComma: true,
     spaceAroundArrow: true,
+    spaceAroundOperators: true,
     trimTrailingWhitespace: true,
-    insertFinalNewline: true,
+  },
+
+  // linter settings
+  rules: {
+    correctIndentation: "error",
+    indentStyle: "error",
+    noDuplicateLabels: "error",
+    noInvalidGoto: "error",
+    noSingleQuotes: "warn",
+    noUnclosedBracket: "error",
+    noUnclosedString: "error",
+    noUndefinedVars: "error",
+    noUnusedVars: "warn",
+    validKeyword: "error",
+    validSubKeyword: "error",
   },
 }
 ```
 
-### Rule Severity Levels
+Linter rules can have these values:
 
-- `'off'` or `0` - Disable the rule
-- `'warn'` or `1` - Show as warning (doesn't fail linting)
-- `'error'` or `2` - Show as error (fails linting)
+- `"off"` or `0` - Disable the rule
+- `"warn"` or `1` - Show as warning (doesn't fail linting)
+- `"error"` or `2` - Show as error (fails linting)
 
-## Available Rules
+## Directives
 
-GTLint includes the following linting rules:
-
-### Code Quality
-
-- **`no-undefined-vars`** - Detects use of undefined variables and variables used before they are defined
-- **`no-unused-vars`** - Warns about variables that are defined but never used
-- **`no-invalid-goto`** - Ensures `*goto:` statements reference valid `*label:` targets
-- **`no-duplicate-labels`** - Detects duplicate `*label:` definitions within a program
-- **`no-unused-labels`** - Warns about `*label:` definitions that are never referenced by a `*goto`
-
-- **`no-empty-blocks`** - Detects empty keyword blocks where a body is required (e.g., `*if`, `*while`, `*page`, `*else`)
-
-### Syntax Validation
-
-- **`valid-keyword`** - Validates that keywords are recognized GuidedTrack keywords
-- **`valid-sub-keyword`** - Validates that sub-keywords are valid for their parent keyword
-- **`no-unclosed-string`** - Detects unclosed string literals
-- **`no-unclosed-bracket`** - Detects unclosed brackets, braces, or parentheses
-
-### Indentation
-
-- **`indent-style`** - Enforces tab-only indentation (GuidedTrack requirement)
-- **`correct-indentation`** - Validates indentation levels: detects over-indentation and content indented under keywords that forbid bodies
-
-### Style
-
-- **`no-single-quotes`** - Enforces double quotes for string literals
-
-### `*html` Blocks
-
-Lint rules are automatically suppressed inside `*html` block bodies since the content is HTML, not GuidedTrack code. The only exception is `no-undefined-vars`, which still reports for `{variable}` interpolations inside HTML. Rules still apply to the `*html` keyword line itself.
-
-## Disabling Rules and Formatting
-
-You can disable linting and/or formatting for specific lines or sections using inline comments. GTLint supports three directive prefixes:
-
-- **`@gt-*`** - Affects both linting and formatting
-- **`@gtlint-*`** - Affects linting only
-- **`@gtformat-*`** - Affects formatting only
-
-### Examples
-
-```
--- Disable specific lint rule for next line
--- @gtlint-disable-next-line no-unused-vars
->> temp_variable = 42
-
--- Disable all linting in a region
--- @gtlint-disable no-undefined-vars
->> x = some_undefined_var
->> y = another_undefined_var
--- @gtlint-enable no-undefined-vars
-
--- Disable formatting in a region (preserve exact whitespace)
--- @gtformat-disable
->>   x   =   5
->>   y   =   10
--- @gtformat-enable
-
--- Disable both linting AND formatting
--- @gt-disable
->> badly_formatted = some_undefined_var
--- @gt-enable
-```
-
-### Directive Reference
+The linter's and formatter's behaviors can also be overridden by inline _directives_ written directly into `.gt` files. Here are the available directives and what they do:
 
 **Combined (lint + format):**
 
-| Directive                              | Behavior                                           |
-| -------------------------------------- | -------------------------------------------------- |
-| `-- @gt-disable`                        | Disable lint + format until `@gt-enable` or EOF     |
+| Directive                               | Behavior                                           |
+| --------------------------------------- | -------------------------------------------------- |
+| `-- @gt-disable`                        | Disable lint + format until `@gt-enable` or EOF    |
 | `-- @gt-enable`                         | Re-enable lint + format                            |
-| `-- @gt-disable-next-line`               | Disable lint + format for next line only           |
-| `-- @gt-disable-next-line rule1, rule2`  | Disable specific lint rules + format for next line |
+| `-- @gt-disable-next-line`              | Disable lint + format for next line only           |
+| `-- @gt-disable-next-line rule1, rule2` | Disable specific lint rules + format for next line |
 
 **Lint-only:**
 
-| Directive                                  | Behavior                                            |
-| ------------------------------------------ | --------------------------------------------------- |
-| `-- @gtlint-disable`                        | Disable all lint rules until `@gtlint-enable` or EOF |
-| `-- @gtlint-disable rule1, rule2`           | Disable specific lint rules                         |
-| `-- @gtlint-enable`                         | Re-enable all lint rules                            |
-| `-- @gtlint-enable rule1`                   | Re-enable specific lint rule                        |
-| `-- @gtlint-disable-next-line`               | Disable all lint rules for next line                |
-| `-- @gtlint-disable-next-line rule1, rule2`  | Disable specific rules for next line                |
+| Directive                                   | Behavior                                                                                            |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `-- @gtlint-disable`                        | Disable all lint rules until `@gtlint-enable` or EOF                                                |
+| `-- @gtlint-disable rule1, rule2`           | Disable specific lint rules                                                                         |
+| `-- @gtlint-enable`                         | Re-enable all lint rules                                                                            |
+| `-- @gtlint-enable rule1`                   | Re-enable specific lint rule                                                                        |
+| `-- @gtlint-disable-next-line`              | Disable all lint rules for next line                                                                |
+| `-- @gtlint-disable-next-line rule1, rule2` | Disable specific rules for next line                                                                |
+| `-- @from-child: var1, var2, ...`           | Do not mark listed variables as undefined (because they are defined in a child program)             |
+| `-- @from-parent: var1, var2, ...`          | Do not mark listed variables as undefined (because they are defined in a parent program)            |
+| `-- @from-url: var1, var2, ...`             | Do not mark listed variables as undefined (because they are defined in URL query string parameters) |
+| `-- @to-child: var1, var2, ...`             | Do not mark listed variables as unused (because they will be used in a child program)               |
+| `-- @to-parent: var1, var2, ...`            | Do not mark listed variables as unused (because they will be used in a parent program)              |
+| `-- @to-csv: var1, var2, ...`               | Do not mark listed variables as unused (because they will be saved in the root program's CSV)       |
+
+> **NOTE:** Inline directive rule names always use kebab-case (e.g., `no-unused-vars`), even though config files use camelCase.
 
 **Format-only:**
 
-| Directive             | Behavior                                          |
-| --------------------- | ------------------------------------------------- |
+| Directive              | Behavior                                           |
+| ---------------------- | -------------------------------------------------- |
 | `-- @gtformat-disable` | Disable formatting until `@gtformat-enable` or EOF |
-| `-- @gtformat-enable`  | Re-enable formatting                              |
+| `-- @gtformat-enable`  | Re-enable formatting                               |
 
-Note: `@gtformat-*` directives don't support rule lists since formatting isn't rule-based.
-
-Note: Inline directive rule names always use kebab-case (e.g., `no-unused-vars`), even though config files use camelCase.
-
-## Declaring Program APIs
-
-GuidedTrack programs often call other programs as sub-programs, passing variables between parent and child programs through global scope. Use API directives to document these variable flows and suppress false warnings.
-
-### Child Program Perspective
-
-When writing a **child program** (one that will be called by a parent), use `@from-parent` and `@to-parent`:
-
-```
--- @from-parent: email_address
--- @to-parent: was_added
-
->> was_added = "no"
-
-*if: not email_address
-	ERROR: You must define a variable called email_address!
-	*quit
-
-*service: Mailing List Service
-	*method: POST
-	*path: /subscribe
-	*send: { "email_address" -> email_address }
-	*success
-		>> was_added = "yes"
-```
-
-### Parent Program Perspective
-
-When writing a **parent program** that calls a child, use `@to-child` and `@from-child`:
-
-```
--- @to-child: email_address
--- @from-child: was_added
-
->> email_address = "someone@example.com"
-*program: Add Email Address to Mailing List
-
-*if: was_added = "yes"
-	We added you to our mailing list!
-```
-
-### URL Query String Variables
-
-Variables can also be passed to a GuidedTrack program via URL query string parameters (e.g., `?x=5&name=Alice`). Use `@from-url` to document these — it behaves identically to `@from-parent` but communicates that the variable comes from the URL rather than a parent program:
-
-```
--- @from-url: participant_id, condition
-*if: condition = "A"
-	Welcome to Group A!
-```
-
-### CSV Export Variables
-
-All variables in a GuidedTrack program are collected by the root parent program and made available as a CSV export. Use `@to-csv` to document variables whose primary purpose is to appear in the CSV — it behaves identically to `@to-parent` but communicates that the variable is intended for data collection rather than consumption by a parent program:
-
-```
--- @to-csv: response_time, accuracy
->> response_time = 0
->> accuracy = 0
-```
-
-### API Directive Reference
-
-**From child program's perspective:**
-
-- `-- @from-parent: var1, var2, ...` - Variables received from parent program (suppresses `no-undefined-vars`)
-- `-- @to-parent: var1, var2, ...` - Variables returned to parent program (suppresses `no-unused-vars`)
-
-**From parent program's perspective:**
-
-- `-- @to-child: var1, var2, ...` - Variables sent to child program (suppresses `no-unused-vars`)
-- `-- @from-child: var1, var2, ...` - Variables received from child program (suppresses `no-undefined-vars`)
-
-**Aliases:**
-
-- `-- @from-url: var1, var2, ...` - Alias for `@from-parent`; variables received via URL query string (suppresses `no-undefined-vars`)
-- `-- @to-csv: var1, var2, ...` - Alias for `@to-parent`; variables collected in CSV export (suppresses `no-unused-vars`)
-
-You can use multiple directives of the same type if needed:
-
-```
--- @from-parent: input1, input2
--- @from-parent: input3
--- @to-parent: output1
--- @to-parent: output2, output3
-```
-
-## Formatter Options
-
-Configure the formatter in your `gtlint.config.js`:
-
-```javascript
-export default {
-  format: {
-    spaceAroundOperators: true, // Spaces around =, +, -, etc. (default: true)
-    spaceAfterComma: true, // Space after commas in lists (default: true)
-    spaceAroundArrow: true, // Spaces around -> in associations (default: true)
-    spaceInsideBraces: 0, // Spaces inside { } (default: 0)
-    spaceInsideBrackets: 0, // Spaces inside [ ] (default: 0)
-    spaceInsideParens: 0, // Spaces inside ( ) (default: 0)
-    trimTrailingWhitespace: true, // Remove trailing whitespace (default: true)
-    insertFinalNewline: true, // Ensure file ends with newline (default: true)
-  },
-}
-```
-
-### Spacing Options
-
-**Operator and delimiter spacing:**
-
-- `spaceAroundOperators` - Adds spaces around operators like `=`, `+`, `-`, `*`, `/`, etc.
-- `spaceAfterComma` - Adds a space after commas in lists and function arguments
-- `spaceAroundArrow` - Adds spaces around the `->` operator in object associations
-
-**Bracket padding:**
-
-- `spaceInsideBraces` - Number of spaces inside `{ }` braces
-- `spaceInsideBrackets` - Number of spaces inside `[ ]` brackets
-- `spaceInsideParens` - Number of spaces inside `( )` parentheses
-
-Each bracket type is independently configurable. Empty pairs (`{}`, `[]`, `()`) are never padded. String interpolation braces in text lines (`{variable}`) are unaffected by `spaceInsideBraces`.
-
-**Examples:**
-
-With `spaceInsideBraces: 1`:
-
-```
->> person = { "name" -> "Alice", "age" -> 30 }
-```
-
-With `spaceInsideBrackets: 1`:
-
-```
->> numbers = [ 1, 2, 3, 4, 5 ]
-```
-
-With `spaceInsideParens: 1`:
-
-```
->> result = calculate( x + y )
-```
-
-**Whitespace cleanup:**
-
-- `trimTrailingWhitespace` - Removes spaces and tabs at the end of lines
-- `insertFinalNewline` - Ensures the file ends with a newline character
-
-## Example
-
-Here's a simple GuidedTrack program that passes all linting rules:
-
-```
--- Welcome program
-*program: Welcome Survey
-
->> user_name = ""
-
-*question: What is your name?
-	*save: user_name
-
-*if: user_name
-	Hello, {user_name}!
-*else
-	Hello there!
-
-*question: How are you feeling today?
-	*type: multiple choice
-	*save: mood
-	Great
-	Good
-	Okay
-	Not great
-
-*if: mood = "Great" or mood = "Good"
-	Glad to hear it!
-
-*label: end
-Thank you for participating!
-```
-
-## Requirements
-
-- Node.js 18.0.0 or higher
-
-## About GuidedTrack
-
-GuidedTrack is a domain-specific language for creating web apps, forms, and surveys. Learn more at [guidedtrack.com](https://guidedtrack.com) or check the [documentation](https://docs.guidedtrack.com).
+> **NOTE:** `@gtformat-*` directives don't support rule lists since formatting isn't rule-based.
 
 ## License
 
