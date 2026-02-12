@@ -15,7 +15,8 @@ const KEYWORD_SUB_KEYWORDS = {
     question: new Set([
         'type', 'shuffle', 'save', 'tip', 'confirm', 'searchable', 'throwaway',
         'countdown', 'tags', 'answers', 'blank', 'multiple', 'default', 'before',
-        'after', 'min', 'max', 'time', 'date', 'placeholder', 'other', 'icon', 'image'
+        'after', 'min', 'max', 'time', 'date', 'placeholder', 'other', 'icon', 'image',
+        'classes'
     ]),
     randomize: new Set(['everytime', 'name', 'group']),
     service: new Set(['path', 'method', 'send', 'success', 'error']),

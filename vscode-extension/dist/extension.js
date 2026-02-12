@@ -1939,7 +1939,8 @@ var KEYWORD_SUB_KEYWORDS = {
     "placeholder",
     "other",
     "icon",
-    "image"
+    "image",
+    "classes"
   ]),
   randomize: /* @__PURE__ */ new Set(["everytime", "name", "group"]),
   service: /* @__PURE__ */ new Set(["path", "method", "send", "success", "error"]),
