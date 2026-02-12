@@ -34,7 +34,7 @@ __export(extension_exports, {
   deactivate: () => deactivate
 });
 module.exports = __toCommonJS(extension_exports);
-var vscode6 = __toESM(require("vscode"));
+var vscode5 = __toESM(require("vscode"));
 
 // src/configuration.ts
 var vscode = __toESM(require("vscode"));
@@ -2864,11 +2864,7 @@ var indentStyle = {
               context.report({
                 message: "Use tabs for indentation, not spaces",
                 line: lineNumber,
-                column: firstSpace + 1,
-                fix: {
-                  range: [getLineOffset(lines, i), getLineOffset(lines, i) + leadingWhitespace.length],
-                  text: leadingWhitespace.replace(/ {2,}/g, (match) => "	".repeat(Math.ceil(match.length / 2))).replace(/ /g, "")
-                }
+                column: firstSpace + 1
               });
             }
           }
@@ -2877,13 +2873,6 @@ var indentStyle = {
     };
   }
 };
-function getLineOffset(lines, lineIndex) {
-  let offset = 0;
-  for (let i = 0; i < lineIndex; i++) {
-    offset += lines[i].length + 1;
-  }
-  return offset;
-}
 
 // ../dist/linter/rules/no-unclosed-string.js
 var noUnclosedString = {
@@ -4187,8 +4176,7 @@ var Linter = class {
             line: descriptor.line,
             column: descriptor.column,
             endLine: descriptor.endLine,
-            endColumn: descriptor.endColumn,
-            fix: descriptor.fix
+            endColumn: descriptor.endColumn
           });
         },
         getSourceCode: () => source,
@@ -4222,17 +4210,11 @@ var Linter = class {
     });
     let errorCount = 0;
     let warningCount = 0;
-    let fixableErrorCount = 0;
-    let fixableWarningCount = 0;
     for (const msg of this.messages) {
       if (msg.severity === "error") {
         errorCount++;
-        if (msg.fix)
-          fixableErrorCount++;
       } else if (msg.severity === "warning") {
         warningCount++;
-        if (msg.fix)
-          fixableWarningCount++;
       }
     }
     return {
@@ -4240,22 +4222,8 @@ var Linter = class {
       messages: this.messages,
       errorCount,
       warningCount,
-      fixableErrorCount,
-      fixableWarningCount,
       source
     };
-  }
-  fix(source) {
-    const result = this.lint(source);
-    if (result.fixableErrorCount + result.fixableWarningCount === 0) {
-      return source;
-    }
-    const fixes = result.messages.filter((m) => m.fix).map((m) => m.fix).sort((a, b) => b.range[0] - a.range[0]);
-    let output = source;
-    for (const fix of fixes) {
-      output = output.slice(0, fix.range[0]) + fix.text + output.slice(fix.range[1]);
-    }
-    return output;
   }
   visitNode(node, visitor) {
     if (!node || typeof node !== "object")
@@ -4837,92 +4805,8 @@ var GTLintFormatterProvider = class {
   }
 };
 
-// src/codeActions.ts
-var vscode4 = __toESM(require("vscode"));
-var GTLintCodeActionProvider = class {
-  static {
-    this.providedCodeActionKinds = [vscode4.CodeActionKind.QuickFix];
-  }
-  async provideCodeActions(document, range, context, _token) {
-    const { linter: linterConfig, settings } = await getConfigForDocument(document);
-    if (!settings.enable) {
-      return [];
-    }
-    const source = document.getText();
-    const linter = new Linter(linterConfig);
-    const result = linter.lint(source, document.uri.fsPath);
-    const actions = [];
-    for (const message of result.messages) {
-      if (!message.fix) {
-        continue;
-      }
-      const messageRange = this.getMessageRange(message, document);
-      if (!messageRange.intersection(range)) {
-        continue;
-      }
-      const action = this.createQuickFix(document, message, message.fix);
-      actions.push(action);
-    }
-    for (const diagnostic of context.diagnostics) {
-      if (diagnostic.source !== "gtlint") {
-        continue;
-      }
-      const message = result.messages.find(
-        (m) => m.ruleId === diagnostic.code && m.line - 1 === diagnostic.range.start.line && m.fix
-      );
-      if (message?.fix) {
-        const alreadyAdded = actions.some(
-          (a) => a.title === `Fix: ${message.message}` || a.title === this.getFixTitle(message)
-        );
-        if (!alreadyAdded) {
-          const action = this.createQuickFix(document, message, message.fix);
-          action.diagnostics = [diagnostic];
-          actions.push(action);
-        }
-      }
-    }
-    return actions;
-  }
-  getMessageRange(message, document) {
-    const startLine = Math.max(0, message.line - 1);
-    const startColumn = Math.max(0, message.column - 1);
-    const endLine = message.endLine !== void 0 ? Math.max(0, message.endLine - 1) : startLine;
-    const endColumn = message.endColumn !== void 0 ? Math.max(0, message.endColumn - 1) : startColumn + 1;
-    return new vscode4.Range(
-      new vscode4.Position(startLine, startColumn),
-      new vscode4.Position(endLine, endColumn)
-    );
-  }
-  getFixTitle(message) {
-    switch (message.ruleId) {
-      case "no-undefined-vars":
-        return `Define variable mentioned in error`;
-      case "indent-style":
-        return `Fix indentation`;
-      case "no-unclosed-string":
-        return `Close string`;
-      case "no-unclosed-bracket":
-        return `Close bracket`;
-      default:
-        return `Fix: ${message.message}`;
-    }
-  }
-  createQuickFix(document, message, fix) {
-    const title = this.getFixTitle(message);
-    const action = new vscode4.CodeAction(title, vscode4.CodeActionKind.QuickFix);
-    const startPos = document.positionAt(fix.range[0]);
-    const endPos = document.positionAt(fix.range[1]);
-    const range = new vscode4.Range(startPos, endPos);
-    const edit = new vscode4.WorkspaceEdit();
-    edit.replace(document.uri, range, fix.text);
-    action.edit = edit;
-    action.isPreferred = true;
-    return action;
-  }
-};
-
 // src/completions.ts
-var vscode5 = __toESM(require("vscode"));
+var vscode4 = __toESM(require("vscode"));
 var DIRECTIVES = [
   // Combined (lint + format)
   { label: "@gt-disable", detail: "Disable linting and formatting until @gt-enable", snippet: "@gt-disable" },
@@ -4962,12 +4846,12 @@ var GTLintCompletionProvider = class {
     const afterDashes = linePrefix.replace(/^\s*--\s*/, "");
     if (afterDashes === "" || afterDashes.startsWith("@") && !afterDashes.includes(" ")) {
       return DIRECTIVES.map((d, i) => {
-        const item = new vscode5.CompletionItem(d.label, vscode5.CompletionItemKind.Keyword);
+        const item = new vscode4.CompletionItem(d.label, vscode4.CompletionItemKind.Keyword);
         item.detail = d.detail;
-        item.insertText = new vscode5.SnippetString(d.snippet);
+        item.insertText = new vscode4.SnippetString(d.snippet);
         item.sortText = String(i).padStart(2, "0");
         const startCol = linePrefix.length - afterDashes.length;
-        item.range = new vscode5.Range(position.line, startCol, position.line, position.character);
+        item.range = new vscode4.Range(position.line, startCol, position.line, position.character);
         return item;
       });
     }
@@ -4980,9 +4864,9 @@ var GTLintCompletionProvider = class {
         const startCol = position.character - fragment.length;
         return ruleNames.map((name) => {
           const rule = rules[name];
-          const item = new vscode5.CompletionItem(name, vscode5.CompletionItemKind.EnumMember);
+          const item = new vscode4.CompletionItem(name, vscode4.CompletionItemKind.EnumMember);
           item.detail = rule.description;
-          item.range = new vscode5.Range(position.line, startCol, position.line, position.character);
+          item.range = new vscode4.Range(position.line, startCol, position.line, position.character);
           return item;
         });
       }
@@ -4994,28 +4878,18 @@ var GTLintCompletionProvider = class {
 // src/extension.ts
 var outputChannel;
 function activate(context) {
-  outputChannel = vscode6.window.createOutputChannel("GTLint");
+  outputChannel = vscode5.window.createOutputChannel("GTLint");
   outputChannel.appendLine("GTLint extension activated");
   const formatterProvider = new GTLintFormatterProvider();
   context.subscriptions.push(
-    vscode6.languages.registerDocumentFormattingEditProvider(
+    vscode5.languages.registerDocumentFormattingEditProvider(
       { language: "guidedtrack" },
       formatterProvider
     )
   );
-  const codeActionProvider = new GTLintCodeActionProvider();
-  context.subscriptions.push(
-    vscode6.languages.registerCodeActionsProvider(
-      { language: "guidedtrack" },
-      codeActionProvider,
-      {
-        providedCodeActionKinds: GTLintCodeActionProvider.providedCodeActionKinds
-      }
-    )
-  );
   const completionProvider = new GTLintCompletionProvider();
   context.subscriptions.push(
-    vscode6.languages.registerCompletionItemProvider(
+    vscode5.languages.registerCompletionItemProvider(
       { language: "guidedtrack" },
       completionProvider,
       "@",
@@ -5025,7 +4899,7 @@ function activate(context) {
   );
   lintAllOpen();
   context.subscriptions.push(
-    vscode6.workspace.onDidChangeTextDocument((event) => {
+    vscode5.workspace.onDidChangeTextDocument((event) => {
       const settings = getVSCodeSettings();
       if (settings.enable && settings.lintOnType) {
         scheduleLint(event.document, settings.lintOnTypeDelay);
@@ -5033,7 +4907,7 @@ function activate(context) {
     })
   );
   context.subscriptions.push(
-    vscode6.workspace.onDidSaveTextDocument((document) => {
+    vscode5.workspace.onDidSaveTextDocument((document) => {
       const settings = getVSCodeSettings();
       if (settings.enable && settings.lintOnSave) {
         lintNow(document);
@@ -5041,7 +4915,7 @@ function activate(context) {
     })
   );
   context.subscriptions.push(
-    vscode6.workspace.onDidOpenTextDocument((document) => {
+    vscode5.workspace.onDidOpenTextDocument((document) => {
       if (document.languageId === "guidedtrack") {
         const settings = getVSCodeSettings();
         if (settings.enable) {
@@ -5051,12 +4925,12 @@ function activate(context) {
     })
   );
   context.subscriptions.push(
-    vscode6.workspace.onDidCloseTextDocument((document) => {
+    vscode5.workspace.onDidCloseTextDocument((document) => {
       clearDiagnostics(document);
     })
   );
   context.subscriptions.push(
-    vscode6.workspace.onDidChangeConfiguration((event) => {
+    vscode5.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("gtlint")) {
         outputChannel.appendLine("GTLint configuration changed, re-linting all documents");
         lintAllOpen();
@@ -5064,8 +4938,8 @@ function activate(context) {
     })
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("gtlint.lintFile", () => {
-      const editor = vscode6.window.activeTextEditor;
+    vscode5.commands.registerCommand("gtlint.lintFile", () => {
+      const editor = vscode5.window.activeTextEditor;
       if (editor && editor.document.languageId === "guidedtrack") {
         lintNow(editor.document);
         outputChannel.appendLine(`Linted: ${editor.document.fileName}`);
@@ -5073,10 +4947,10 @@ function activate(context) {
     })
   );
   context.subscriptions.push(
-    vscode6.commands.registerCommand("gtlint.formatFile", async () => {
-      const editor = vscode6.window.activeTextEditor;
+    vscode5.commands.registerCommand("gtlint.formatFile", async () => {
+      const editor = vscode5.window.activeTextEditor;
       if (editor && editor.document.languageId === "guidedtrack") {
-        await vscode6.commands.executeCommand("editor.action.formatDocument");
+        await vscode5.commands.executeCommand("editor.action.formatDocument");
         outputChannel.appendLine(`Formatted: ${editor.document.fileName}`);
       }
     })

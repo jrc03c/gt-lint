@@ -1,11 +1,10 @@
-import type { LintResult, LinterConfig, Fix } from '../types.js';
+import type { LintResult, LinterConfig } from '../types.js';
 export interface ReportDescriptor {
     message: string;
     line: number;
     column: number;
     endLine?: number;
     endColumn?: number;
-    fix?: Fix;
 }
 export interface RuleContext {
     report(descriptor: ReportDescriptor): void;
@@ -34,7 +33,6 @@ export declare class Linter {
     private source;
     constructor(config?: Partial<LinterConfig>);
     lint(source: string, filePath?: string): LintResult;
-    fix(source: string): string;
     private visitNode;
 }
 export declare function lint(source: string, config?: Partial<LinterConfig>): LintResult;

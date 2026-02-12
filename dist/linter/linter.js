@@ -140,7 +140,6 @@ export class Linter {
                         column: descriptor.column,
                         endLine: descriptor.endLine,
                         endColumn: descriptor.endColumn,
-                        fix: descriptor.fix,
                     });
                 },
                 getSourceCode: () => source,
@@ -180,18 +179,12 @@ export class Linter {
         // Calculate counts
         let errorCount = 0;
         let warningCount = 0;
-        let fixableErrorCount = 0;
-        let fixableWarningCount = 0;
         for (const msg of this.messages) {
             if (msg.severity === 'error') {
                 errorCount++;
-                if (msg.fix)
-                    fixableErrorCount++;
             }
             else if (msg.severity === 'warning') {
                 warningCount++;
-                if (msg.fix)
-                    fixableWarningCount++;
             }
         }
         return {
@@ -199,26 +192,8 @@ export class Linter {
             messages: this.messages,
             errorCount,
             warningCount,
-            fixableErrorCount,
-            fixableWarningCount,
             source,
         };
-    }
-    fix(source) {
-        const result = this.lint(source);
-        if (result.fixableErrorCount + result.fixableWarningCount === 0) {
-            return source;
-        }
-        // Collect fixes and sort by range (reverse order for safe replacement)
-        const fixes = result.messages
-            .filter(m => m.fix)
-            .map(m => m.fix)
-            .sort((a, b) => b.range[0] - a.range[0]);
-        let output = source;
-        for (const fix of fixes) {
-            output = output.slice(0, fix.range[0]) + fix.text + output.slice(fix.range[1]);
-        }
-        return output;
     }
     visitNode(node, visitor) {
         if (!node || typeof node !== 'object')

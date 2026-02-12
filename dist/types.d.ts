@@ -15,19 +15,12 @@ export interface LintMessage {
     column: number;
     endLine?: number;
     endColumn?: number;
-    fix?: Fix;
-}
-export interface Fix {
-    range: [number, number];
-    text: string;
 }
 export interface LintResult {
     filePath: string;
     messages: LintMessage[];
     errorCount: number;
     warningCount: number;
-    fixableErrorCount: number;
-    fixableWarningCount: number;
     source?: string;
     output?: string;
 }

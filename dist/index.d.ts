@@ -6,6 +6,6 @@ export { Linter, lint } from './linter/index.js';
 export type { LintRule, RuleContext, RuleVisitor, ReportDescriptor } from './linter/index.js';
 export { rules, getRule, getAllRules } from './linter/index.js';
 export { Formatter, format } from './formatter/index.js';
-export type { LintMessage, LintResult, LinterConfig, FormatterConfig, Fix, } from './types.js';
+export type { LintMessage, LintResult, LinterConfig, FormatterConfig, } from './types.js';
 export { DEFAULT_LINTER_CONFIG, DEFAULT_FORMATTER_CONFIG } from './types.js';
 //# sourceMappingURL=index.d.ts.map
