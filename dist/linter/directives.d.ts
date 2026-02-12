@@ -23,8 +23,10 @@
  *
  * Variable tracking:
  * - `-- @from-parent: var1, var2` - Variables received from parent program (suppresses no-undefined-vars)
+ * - `-- @from-url: var1, var2` - Alias for @from-parent; variables received via URL query string (suppresses no-undefined-vars)
  * - `-- @from-child: var1, var2` - Variables received from child program (suppresses no-undefined-vars)
  * - `-- @to-parent: var1, var2` - Variables sent to parent program (suppresses no-unused-vars)
+ * - `-- @to-csv: var1, var2` - Alias for @to-parent; variables collected in CSV export (suppresses no-unused-vars)
  * - `-- @to-child: var1, var2` - Variables sent to child program (suppresses no-unused-vars)
  */
 export interface DirectiveState {

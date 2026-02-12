@@ -114,6 +114,38 @@ describe('Linter', () => {
       expect(undefinedI).toBeUndefined();
       expect(undefinedV).toBeUndefined();
     });
+
+    it('should report error for undefined object in property assignment', () => {
+      const source = '>> undefinedObj["key"] = "value"';
+      const result = lint(source);
+
+      const undefinedError = result.messages.find(m =>
+        m.ruleId === 'no-undefined-vars' && m.message.includes("'undefinedObj'")
+      );
+      expect(undefinedError).toBeDefined();
+    });
+
+    it('should report error for undefined index in property assignment', () => {
+      const source = `>> obj = {}
+>> obj[undefinedIdx] = "value"`;
+      const result = lint(source);
+
+      const undefinedError = result.messages.find(m =>
+        m.ruleId === 'no-undefined-vars' && m.message.includes("'undefinedIdx'")
+      );
+      expect(undefinedError).toBeDefined();
+    });
+
+    it('should not report error for defined object in property assignment', () => {
+      const source = `>> obj = {}
+>> obj["key"] = "value"`;
+      const result = lint(source);
+
+      const undefinedError = result.messages.find(m =>
+        m.ruleId === 'no-undefined-vars' && m.message.includes("'obj'")
+      );
+      expect(undefinedError).toBeUndefined();
+    });
   });
 
   describe('no-unused-vars rule', () => {
@@ -160,7 +192,7 @@ describe('Linter', () => {
       expect(unusedWarning).toBeUndefined();
     });
 
-    it('should not report warning for variable used via indexed assignment', () => {
+    it('should report warning for variable only used via indexed assignment', () => {
       const source = `>> payload = {}
 >> payload["key"] = "value"`;
       const result = lint(source);
@@ -168,7 +200,44 @@ describe('Linter', () => {
       const unusedWarning = result.messages.find(m =>
         m.ruleId === 'no-unused-vars' && m.message.includes("'payload'")
       );
+      expect(unusedWarning).toBeDefined();
+    });
+
+    it('should not report warning for variable used via indexed assignment AND read elsewhere', () => {
+      const source = `>> payload = {}
+>> payload["key"] = "value"
+*service: myService
+\t*send: payload`;
+      const result = lint(source);
+
+      const unusedWarning = result.messages.find(m =>
+        m.ruleId === 'no-unused-vars' && m.message.includes("'payload'")
+      );
       expect(unusedWarning).toBeUndefined();
+    });
+
+    it('should count index variables as usages in compound assignment targets', () => {
+      const source = `>> arr = []
+>> i = 0
+>> arr[i] = "value"`;
+      const result = lint(source);
+
+      // i is genuinely read to compute the index — should not be flagged
+      const unusedI = result.messages.find(m =>
+        m.ruleId === 'no-unused-vars' && m.message.includes("'i'")
+      );
+      expect(unusedI).toBeUndefined();
+    });
+
+    it('should not count variable as used when only member-assigned', () => {
+      const source = `>> obj = {}
+>> obj.name = "Alice"`;
+      const result = lint(source);
+
+      const unusedWarning = result.messages.find(m =>
+        m.ruleId === 'no-unused-vars' && m.message.includes("'obj'")
+      );
+      expect(unusedWarning).toBeDefined();
     });
 
     it('should not report warning for variable used in *send: sub-keyword', () => {

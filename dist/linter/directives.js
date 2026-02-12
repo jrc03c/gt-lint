@@ -23,8 +23,10 @@
  *
  * Variable tracking:
  * - `-- @from-parent: var1, var2` - Variables received from parent program (suppresses no-undefined-vars)
+ * - `-- @from-url: var1, var2` - Alias for @from-parent; variables received via URL query string (suppresses no-undefined-vars)
  * - `-- @from-child: var1, var2` - Variables received from child program (suppresses no-undefined-vars)
  * - `-- @to-parent: var1, var2` - Variables sent to parent program (suppresses no-unused-vars)
+ * - `-- @to-csv: var1, var2` - Alias for @to-parent; variables collected in CSV export (suppresses no-unused-vars)
  * - `-- @to-child: var1, var2` - Variables sent to child program (suppresses no-unused-vars)
  */
 export function parseDirectives(source) {
@@ -194,9 +196,10 @@ export function parseDirectives(source) {
             }
             continue;
         }
-        // Parse @from-parent
-        if (commentContent.startsWith('@from-parent:')) {
-            const varsStr = commentContent.slice('@from-parent:'.length).trim();
+        // Parse @from-parent / @from-url (alias)
+        if (commentContent.startsWith('@from-parent:') || commentContent.startsWith('@from-url:')) {
+            const prefix = commentContent.startsWith('@from-parent:') ? '@from-parent:' : '@from-url:';
+            const varsStr = commentContent.slice(prefix.length).trim();
             const vars = parseVarList(varsStr);
             for (const v of vars) {
                 state.fromParentVars.add(v);
@@ -212,9 +215,10 @@ export function parseDirectives(source) {
             }
             continue;
         }
-        // Parse @to-parent
-        if (commentContent.startsWith('@to-parent:')) {
-            const varsStr = commentContent.slice('@to-parent:'.length).trim();
+        // Parse @to-parent / @to-csv (alias)
+        if (commentContent.startsWith('@to-parent:') || commentContent.startsWith('@to-csv:')) {
+            const prefix = commentContent.startsWith('@to-parent:') ? '@to-parent:' : '@to-csv:';
+            const varsStr = commentContent.slice(prefix.length).trim();
             const vars = parseVarList(varsStr);
             for (const v of vars) {
                 state.toParentVars.add(v);

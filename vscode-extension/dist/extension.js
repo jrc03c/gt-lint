@@ -2330,6 +2330,9 @@ var noUndefinedVars = {
         collectUsages(node.expression, true);
       } else if (node.type === "BinaryExpression") {
         if (node.operator === "=" && isAssignmentContext) {
+          if (node.left.type !== "Identifier") {
+            collectUsages(node.left, false);
+          }
           collectUsages(node.right, false);
         } else {
           collectUsages(node.left, false);
@@ -2493,6 +2496,14 @@ var noUnusedVars = {
         addDefinition(expr.name, line, column);
       }
     }
+    function collectAssignmentTargetUsages(node) {
+      if (node.type === "IndexExpression") {
+        collectAssignmentTargetUsages(node.object);
+        collectUsages(node.index, false);
+      } else if (node.type === "MemberExpression") {
+        collectAssignmentTargetUsages(node.object);
+      }
+    }
     function collectUsages(node, isAssignmentContext = false) {
       if (!node || typeof node !== "object")
         return;
@@ -2525,7 +2536,7 @@ var noUnusedVars = {
       } else if (node.type === "BinaryExpression") {
         if (node.operator === "=" && isAssignmentContext) {
           if (node.left.type !== "Identifier") {
-            collectUsages(node.left, false);
+            collectAssignmentTargetUsages(node.left);
           }
           collectUsages(node.right, false);
         } else {
@@ -3946,8 +3957,9 @@ function parseDirectives(source) {
       }
       continue;
     }
-    if (commentContent.startsWith("@from-parent:")) {
-      const varsStr = commentContent.slice("@from-parent:".length).trim();
+    if (commentContent.startsWith("@from-parent:") || commentContent.startsWith("@from-url:")) {
+      const prefix = commentContent.startsWith("@from-parent:") ? "@from-parent:" : "@from-url:";
+      const varsStr = commentContent.slice(prefix.length).trim();
       const vars = parseVarList(varsStr);
       for (const v of vars) {
         state.fromParentVars.add(v);
@@ -3962,8 +3974,9 @@ function parseDirectives(source) {
       }
       continue;
     }
-    if (commentContent.startsWith("@to-parent:")) {
-      const varsStr = commentContent.slice("@to-parent:".length).trim();
+    if (commentContent.startsWith("@to-parent:") || commentContent.startsWith("@to-csv:")) {
+      const prefix = commentContent.startsWith("@to-parent:") ? "@to-parent:" : "@to-csv:";
+      const varsStr = commentContent.slice(prefix.length).trim();
       const vars = parseVarList(varsStr);
       for (const v of vars) {
         state.toParentVars.add(v);

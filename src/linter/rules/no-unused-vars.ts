@@ -103,6 +103,19 @@ export const noUnusedVars: LintRule = {
       }
     }
 
+    // Walk an assignment target (IndexExpression/MemberExpression chain),
+    // collecting usages only from index sub-expressions — the root object
+    // is a write target and should not count as a usage.
+    function collectAssignmentTargetUsages(node: Expression): void {
+      if (node.type === 'IndexExpression') {
+        collectAssignmentTargetUsages(node.object);
+        collectUsages(node.index, false);
+      } else if (node.type === 'MemberExpression') {
+        collectAssignmentTargetUsages(node.object);
+      }
+      // For Identifier (root object): intentionally not collected as a usage
+    }
+
     function collectUsages(node: Program | Statement | Expression | SubKeyword | TextContent, isAssignmentContext = false): void {
       if (!node || typeof node !== 'object') return;
 
@@ -138,10 +151,10 @@ export const noUnusedVars: LintRule = {
         // In assignment context, = is assignment; otherwise it's comparison
         if (node.operator === '=' && isAssignmentContext) {
           // For simple assignments (>> x = ...), skip the left side entirely.
-          // For compound targets (>> x["key"] = ..., >> x.prop = ...), the
-          // object is still a usage — only a bare Identifier is skipped.
+          // For compound targets (>> x["key"] = ..., >> x.prop = ...), only
+          // index sub-expressions are usages — the root object is a write target.
           if (node.left.type !== 'Identifier') {
-            collectUsages(node.left, false);
+            collectAssignmentTargetUsages(node.left);
           }
           collectUsages(node.right, false);
         } else {

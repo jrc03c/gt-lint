@@ -142,7 +142,12 @@ export const noUndefinedVars = {
             else if (node.type === 'BinaryExpression') {
                 // In assignment context, = is assignment; otherwise it's comparison
                 if (node.operator === '=' && isAssignmentContext) {
-                    // Don't report the left side of assignments as usage
+                    // For bare identifiers (>> x = ...), skip the left side (it's being defined).
+                    // For compound targets (>> x["key"] = ...), visit the left side — the
+                    // root object and any index expressions need to be defined.
+                    if (node.left.type !== 'Identifier') {
+                        collectUsages(node.left, false);
+                    }
                     collectUsages(node.right, false);
                 }
                 else {
