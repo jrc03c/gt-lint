@@ -2,6 +2,18 @@
 
 **GTLint** is linter, formatter, and syntax highlighter for the [GuidedTrack](https://guidedtrack.com) language, inspired by ESLint and Prettier. It can be used at the command line or installed as a VSCode extension.
 
+- [Intro](#intro)
+- [Disclaimer](#disclaimer)
+- [Command line](#command-line)
+  - [Installation](#installation)
+  - [Usage](#usage)
+- [VSCode extension](#vscode-extension)
+  - [Installation](#installation-1)
+  - [Usage](#usage-1)
+- [Configuration](#configuration)
+- [Directives](#directives)
+- [License](#license)
+
 # Disclaimer
 
 This tool was written almost exclusively by [Claude Code](https://claude.com/product/claude-code). [Josh Castle](https://github.com/jrc03c) directed Claude Code and made a few small changes to `CLAUDE.md`, `README.md`, and the GuidedTrack files in the `samples` directory; but GTLint itself was written entirely by Claude Code.
@@ -120,7 +132,7 @@ Linter rules can have these values:
 - `"warn"` or `1` - Show as warning (doesn't fail linting)
 - `"error"` or `2` - Show as error (fails linting)
 
-## Directives
+# Directives
 
 The linter's and formatter's behaviors can also be overridden by inline _directives_ written directly into `.gt` files. Here are the available directives and what they do:
 
