@@ -86,8 +86,6 @@ export const noUnusedVars = {
                 addDefinition(expr.name, line, column);
             }
         }
-        // Sub-keywords that take expression arguments (variable references)
-        const expressionSubKeywords = new Set(['send', 'default', 'answers', 'data']);
         function collectUsages(node, isAssignmentContext = false) {
             if (!node || typeof node !== 'object')
                 return;
@@ -115,14 +113,6 @@ export const noUnusedVars = {
             else if (node.type === 'SubKeyword') {
                 if (node.argument) {
                     collectUsages(node.argument);
-                }
-                // Recognize variable references in expression-taking sub-keywords
-                if (expressionSubKeywords.has(node.keyword) && node.argument && node.argument.type === 'TextContent') {
-                    for (const part of node.argument.parts) {
-                        if (typeof part === 'string' && /^[a-zA-Z_]\w*$/.test(part.trim())) {
-                            addUsage(part.trim());
-                        }
-                    }
                 }
                 for (const stmt of node.body) {
                     collectUsages(stmt);

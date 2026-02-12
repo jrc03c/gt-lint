@@ -1,4 +1,5 @@
 import { Token, TokenType, KEYWORDS, tokenize } from '../lexer/index.js';
+import { getKeywordSpec } from '../language/keyword-spec.js';
 import type { SourceLocation } from '../types.js';
 import {
   Program,
@@ -175,7 +176,7 @@ export class Parser {
 
     if (this.check(TokenType.INDENT)) {
       this.advance();
-      this.parseKeywordBody(subKeywords, body);
+      this.parseKeywordBody(subKeywords, body, keyword);
     }
 
     return createKeywordStatement(
@@ -187,7 +188,7 @@ export class Parser {
     );
   }
 
-  private parseKeywordBody(subKeywords: SubKeyword[], body: Statement[]): void {
+  private parseKeywordBody(subKeywords: SubKeyword[], body: Statement[], parentKeyword: string): void {
     while (!this.isAtEnd() && !this.check(TokenType.DEDENT)) {
       // Skip newlines
       while (this.check(TokenType.NEWLINE)) {
@@ -198,7 +199,7 @@ export class Parser {
 
       // Sub-keyword
       if (this.check(TokenType.SUB_KEYWORD)) {
-        subKeywords.push(this.parseSubKeyword());
+        subKeywords.push(this.parseSubKeyword(parentKeyword));
         continue;
       }
 
@@ -214,14 +215,26 @@ export class Parser {
     }
   }
 
-  private parseSubKeyword(): SubKeyword {
+  // Sub-keyword value types whose arguments should be parsed as expressions
+  private static readonly EXPRESSION_VALUE_TYPES = new Set(['expression', 'collection', 'association']);
+
+  private parseSubKeyword(parentKeyword: string): SubKeyword {
     const keywordToken = this.advance();
     const keyword = this.extractKeywordName(keywordToken.value);
     const startToken = keywordToken;
 
+    // Check if this sub-keyword expects an expression value
+    const spec = getKeywordSpec(parentKeyword);
+    const subSpec = spec?.subKeywords?.[keyword];
+    const isExpressionValue = subSpec !== undefined &&
+      Parser.EXPRESSION_VALUE_TYPES.has(subSpec.valueType);
+
     // Parse argument
     let argument: Expression | TextContent | null = null;
-    if (this.check(TokenType.TEXT) || this.check(TokenType.INTERPOLATION_START) || this.check(TokenType.IDENTIFIER)) {
+    if (isExpressionValue && (this.check(TokenType.TEXT) || this.check(TokenType.IDENTIFIER))) {
+      const textToken = this.advance();
+      argument = this.parseTextAsExpression(textToken.value, textToken);
+    } else if (this.check(TokenType.TEXT) || this.check(TokenType.INTERPOLATION_START) || this.check(TokenType.IDENTIFIER)) {
       argument = this.parseTextContent();
     }
 

@@ -128,6 +128,82 @@ The result is {result}.`;
     });
   });
 
+  describe('expression-type sub-keyword arguments', () => {
+    it('should report undefined variable in *send: under *trigger', () => {
+      const code = `*trigger: foo-event
+\t*send: x`;
+      const msgs = getMessages(code);
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].message).toContain("'x' is not defined");
+    });
+
+    it('should NOT report defined variable in *send: under *trigger', () => {
+      const code = `>> x = 42
+*trigger: foo-event
+\t*send: x`;
+      const msgs = getMessages(code);
+      expect(msgs).toHaveLength(0);
+    });
+
+    it('should report undefined variable in *send: under *service', () => {
+      const code = `*service: MyAPI
+\t*path: /endpoint
+\t*method: POST
+\t*send: payload
+\t*success
+\t\t>> result = it
+\t*error
+\t\t>> err = it`;
+      const msgs = getMessages(code);
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].message).toContain("'payload' is not defined");
+    });
+
+    it('should report undefined variable in *data: under *chart', () => {
+      const code = `*chart: My Chart
+\t*type: bar
+\t*data: chartData`;
+      const msgs = getMessages(code);
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].message).toContain("'chartData' is not defined");
+    });
+
+    it('should report undefined variable in *answers: under *question', () => {
+      const code = `*question: Pick one
+\t*answers: options`;
+      const msgs = getMessages(code);
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].message).toContain("'options' is not defined");
+    });
+
+    it('should report undefined variable in *default: under *question', () => {
+      const code = `*question: Pick one
+\t*type: text
+\t*default: savedValue`;
+      const msgs = getMessages(code);
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].message).toContain("'savedValue' is not defined");
+    });
+
+    it('should report undefined variable in *with: under *component', () => {
+      const code = `*component
+\t*with: myData
+\tContent here`;
+      const msgs = getMessages(code);
+      expect(msgs).toHaveLength(1);
+      expect(msgs[0].message).toContain("'myData' is not defined");
+    });
+
+    it('should NOT report defined variable in *with: under *component', () => {
+      const code = `>> myData = 42
+*component
+\t*with: myData
+\tContent here`;
+      const msgs = getMessages(code);
+      expect(msgs).toHaveLength(0);
+    });
+  });
+
   describe('completely undefined (existing behavior)', () => {
     it('should still report completely undefined variables', () => {
       const code = `*if: neverDefined > 0

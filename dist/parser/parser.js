@@ -1,4 +1,5 @@
 import { TokenType, tokenize } from '../lexer/index.js';
+import { getKeywordSpec } from '../language/keyword-spec.js';
 import { createProgram, createKeywordStatement, createSubKeyword, createExpressionStatement, createTextStatement, createTextContent, createCommentStatement, createAnswerOption, createBinaryExpression, createUnaryExpression, createMemberExpression, createCallExpression, createIndexExpression, createIdentifier, createLiteral, createArrayExpression, createObjectExpression, createProperty, } from './ast.js';
 export class Parser {
     tokens = [];
@@ -119,11 +120,11 @@ export class Parser {
         const body = [];
         if (this.check(TokenType.INDENT)) {
             this.advance();
-            this.parseKeywordBody(subKeywords, body);
+            this.parseKeywordBody(subKeywords, body, keyword);
         }
         return createKeywordStatement(keyword, argument, subKeywords, body, this.createLoc(startToken, this.previous()));
     }
-    parseKeywordBody(subKeywords, body) {
+    parseKeywordBody(subKeywords, body, parentKeyword) {
         while (!this.isAtEnd() && !this.check(TokenType.DEDENT)) {
             // Skip newlines
             while (this.check(TokenType.NEWLINE)) {
@@ -133,7 +134,7 @@ export class Parser {
                 break;
             // Sub-keyword
             if (this.check(TokenType.SUB_KEYWORD)) {
-                subKeywords.push(this.parseSubKeyword());
+                subKeywords.push(this.parseSubKeyword(parentKeyword));
                 continue;
             }
             // Regular statement
@@ -146,13 +147,24 @@ export class Parser {
             this.advance();
         }
     }
-    parseSubKeyword() {
+    // Sub-keyword value types whose arguments should be parsed as expressions
+    static EXPRESSION_VALUE_TYPES = new Set(['expression', 'collection', 'association']);
+    parseSubKeyword(parentKeyword) {
         const keywordToken = this.advance();
         const keyword = this.extractKeywordName(keywordToken.value);
         const startToken = keywordToken;
+        // Check if this sub-keyword expects an expression value
+        const spec = getKeywordSpec(parentKeyword);
+        const subSpec = spec?.subKeywords?.[keyword];
+        const isExpressionValue = subSpec !== undefined &&
+            Parser.EXPRESSION_VALUE_TYPES.has(subSpec.valueType);
         // Parse argument
         let argument = null;
-        if (this.check(TokenType.TEXT) || this.check(TokenType.INTERPOLATION_START) || this.check(TokenType.IDENTIFIER)) {
+        if (isExpressionValue && (this.check(TokenType.TEXT) || this.check(TokenType.IDENTIFIER))) {
+            const textToken = this.advance();
+            argument = this.parseTextAsExpression(textToken.value, textToken);
+        }
+        else if (this.check(TokenType.TEXT) || this.check(TokenType.INTERPOLATION_START) || this.check(TokenType.IDENTIFIER)) {
             argument = this.parseTextContent();
         }
         // Skip to next line

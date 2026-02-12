@@ -103,6 +103,7 @@ const KNOWN_LINTER_ISSUES: Record<string, string> = {
   'settings':                     'valid-keyword + valid-sub-keyword: settings keywords',
   // no-undefined-vars false positives (vars defined in ways our linter doesn't track)
   'component':                    'no-undefined-vars + valid-sub-keyword: component vars',
+  'component_with_data':          'no-undefined-vars: *with: var from runtime context',
   'email':                        'no-undefined-vars: email template vars',
   'for':                          'no-undefined-vars: undefined collection var in snippet',
   'multiple_service_calls':       'no-undefined-vars: service response vars',

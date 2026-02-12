@@ -12,6 +12,7 @@ export declare class Parser {
     private parseExpressionStatement;
     private parseKeywordStatement;
     private parseKeywordBody;
+    private static readonly EXPRESSION_VALUE_TYPES;
     private parseSubKeyword;
     private parseTextOrAnswerOption;
     private parseTextContent;
