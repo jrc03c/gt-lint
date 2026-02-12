@@ -43,6 +43,5 @@ export type {
   LintResult,
   LinterConfig,
   FormatterConfig,
-  Fix,
 } from './types.js';
 export { DEFAULT_LINTER_CONFIG, DEFAULT_FORMATTER_CONFIG } from './types.js';

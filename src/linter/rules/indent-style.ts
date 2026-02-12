@@ -38,10 +38,6 @@ export const indentStyle: LintRule = {
                 message: 'Use tabs for indentation, not spaces',
                 line: lineNumber,
                 column: firstSpace + 1,
-                fix: {
-                  range: [getLineOffset(lines, i), getLineOffset(lines, i) + leadingWhitespace.length],
-                  text: leadingWhitespace.replace(/ {2,}/g, (match) => '\t'.repeat(Math.ceil(match.length / 2))).replace(/ /g, ''),
-                },
               });
             }
           }
@@ -50,11 +46,3 @@ export const indentStyle: LintRule = {
     };
   },
 };
-
-function getLineOffset(lines: string[], lineIndex: number): number {
-  let offset = 0;
-  for (let i = 0; i < lineIndex; i++) {
-    offset += lines[i].length + 1; // +1 for newline
-  }
-  return offset;
-}

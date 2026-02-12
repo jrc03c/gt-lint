@@ -1,5 +1,5 @@
 import type { Program, ASTNode, KeywordStatement } from '../parser/ast.js';
-import type { LintMessage, LintResult, LinterConfig, Fix } from '../types.js';
+import type { LintMessage, LintResult, LinterConfig } from '../types.js';
 import { DEFAULT_LINTER_CONFIG } from '../types.js';
 import { tokenize } from '../lexer/index.js';
 import { parse } from '../parser/index.js';
@@ -99,7 +99,6 @@ export interface ReportDescriptor {
   column: number;
   endLine?: number;
   endColumn?: number;
-  fix?: Fix;
 }
 
 export interface RuleContext {
@@ -176,7 +175,6 @@ export class Linter {
             column: descriptor.column,
             endLine: descriptor.endLine,
             endColumn: descriptor.endColumn,
-            fix: descriptor.fix,
           });
         },
         getSourceCode: () => source,
@@ -222,16 +220,12 @@ export class Linter {
     // Calculate counts
     let errorCount = 0;
     let warningCount = 0;
-    let fixableErrorCount = 0;
-    let fixableWarningCount = 0;
 
     for (const msg of this.messages) {
       if (msg.severity === 'error') {
         errorCount++;
-        if (msg.fix) fixableErrorCount++;
       } else if (msg.severity === 'warning') {
         warningCount++;
-        if (msg.fix) fixableWarningCount++;
       }
     }
 
@@ -240,30 +234,8 @@ export class Linter {
       messages: this.messages,
       errorCount,
       warningCount,
-      fixableErrorCount,
-      fixableWarningCount,
       source,
     };
-  }
-
-  fix(source: string): string {
-    const result = this.lint(source);
-    if (result.fixableErrorCount + result.fixableWarningCount === 0) {
-      return source;
-    }
-
-    // Collect fixes and sort by range (reverse order for safe replacement)
-    const fixes = result.messages
-      .filter(m => m.fix)
-      .map(m => m.fix!)
-      .sort((a, b) => b.range[0] - a.range[0]);
-
-    let output = source;
-    for (const fix of fixes) {
-      output = output.slice(0, fix.range[0]) + fix.text + output.slice(fix.range[1]);
-    }
-
-    return output;
   }
 
   private visitNode(node: ASTNode, visitor: RuleVisitor): void {

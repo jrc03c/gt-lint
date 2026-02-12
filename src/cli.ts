@@ -10,7 +10,6 @@ import type { LintResult } from './types.js';
 
 interface CLIOptions {
   config?: string;
-  fix?: boolean;
   check?: boolean;
   write?: boolean;
   quiet?: boolean;
@@ -28,7 +27,6 @@ Usage:
   gtlint format [options] [files...]  Format GuidedTrack files
 
 Lint Options:
-  --fix                Auto-fix fixable problems
   --quiet              Only report errors, not warnings
   --format <type>      Output format: stylish (default), json, compact
 
@@ -45,7 +43,6 @@ Examples:
   gtlint lint .                    Lint all .gt files in current directory
   gtlint lint src/                 Lint all .gt files in src directory
   gtlint lint program.gt           Lint a specific file
-  gtlint lint --fix .              Lint and auto-fix all files
   gtlint format --check .          Check if files are formatted
   gtlint format --write .          Format all files in place
 `);
@@ -68,8 +65,6 @@ function parseArgs(args: string[]): { command: string; files: string[]; options:
       command = arg;
     } else if (arg === '--config' && args[i + 1]) {
       options.config = args[++i];
-    } else if (arg === '--fix') {
-      options.fix = true;
     } else if (arg === '--check') {
       options.check = true;
     } else if (arg === '--write') {
@@ -185,18 +180,8 @@ async function runLint(files: string[], options: CLIOptions): Promise<number> {
     const source = readFileSync(filePath, 'utf-8');
     const relativePath = relative(cwd, filePath);
 
-    if (options.fix) {
-      const fixed = linter.fix(source);
-      if (fixed !== source) {
-        writeFileSync(filePath, fixed, 'utf-8');
-      }
-      // Re-lint to get remaining issues
-      const result = linter.lint(fixed, relativePath);
-      results.push(result);
-    } else {
-      const result = linter.lint(source, relativePath);
-      results.push(result);
-    }
+    const result = linter.lint(source, relativePath);
+    results.push(result);
   }
 
   // Filter warnings if quiet mode

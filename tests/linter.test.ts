@@ -19,8 +19,6 @@ describe('Linter', () => {
       expect(result).toHaveProperty('messages');
       expect(result).toHaveProperty('errorCount');
       expect(result).toHaveProperty('warningCount');
-      expect(result).toHaveProperty('fixableErrorCount');
-      expect(result).toHaveProperty('fixableWarningCount');
       expect(result).toHaveProperty('source');
     });
   });
@@ -638,18 +636,4 @@ describe('Linter', () => {
     });
   });
 
-  describe('Auto-fix', () => {
-    it('should have fix method on Linter', () => {
-      const linter = new Linter();
-      expect(typeof linter.fix).toBe('function');
-    });
-
-    it('should return source unchanged if no fixable issues', () => {
-      const linter = new Linter();
-      const source = 'Hello world';
-      const fixed = linter.fix(source);
-
-      expect(fixed).toBe(source);
-    });
-  });
 });
