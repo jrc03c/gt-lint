@@ -138,6 +138,7 @@ The linter's and formatter's behaviors can also be overridden by inline _directi
 
 ```
 -- @to-child: email_address
+>> email_address = "someone@example.com"
 *program: Add to Mailing List
 ```
 
