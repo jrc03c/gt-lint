@@ -124,6 +124,37 @@ describe('Directives Parser', () => {
     });
   });
 
+  describe('@from-url directive (alias for @from-parent)', () => {
+    it('should parse variables from @from-url', () => {
+      const source = `-- @from-url: inputVar1, inputVar2
+*if: inputVar1 > 0`;
+      const state = parseDirectives(source);
+
+      expect(isFromParentVar(state, 'inputVar1')).toBe(true);
+      expect(isFromParentVar(state, 'inputVar2')).toBe(true);
+      expect(isFromParentVar(state, 'otherVar')).toBe(false);
+    });
+
+    it('should handle multiple @from-url directives', () => {
+      const source = `-- @from-url: var1
+-- @from-url: var2, var3`;
+      const state = parseDirectives(source);
+
+      expect(isFromParentVar(state, 'var1')).toBe(true);
+      expect(isFromParentVar(state, 'var2')).toBe(true);
+      expect(isFromParentVar(state, 'var3')).toBe(true);
+    });
+
+    it('should combine with @from-parent into the same set', () => {
+      const source = `-- @from-parent: parentVar
+-- @from-url: urlVar`;
+      const state = parseDirectives(source);
+
+      expect(isFromParentVar(state, 'parentVar')).toBe(true);
+      expect(isFromParentVar(state, 'urlVar')).toBe(true);
+    });
+  });
+
   describe('@from-child directive', () => {
     it('should parse variables from child', () => {
       const source = `-- @from-child: result, status
@@ -145,6 +176,27 @@ describe('Directives Parser', () => {
       expect(isToParentVar(state, 'outputVar1')).toBe(true);
       expect(isToParentVar(state, 'outputVar2')).toBe(true);
       expect(isToParentVar(state, 'otherVar')).toBe(false);
+    });
+  });
+
+  describe('@to-csv directive (alias for @to-parent)', () => {
+    it('should parse variables from @to-csv', () => {
+      const source = `-- @to-csv: outputVar1, outputVar2
+>> outputVar1 = 42`;
+      const state = parseDirectives(source);
+
+      expect(isToParentVar(state, 'outputVar1')).toBe(true);
+      expect(isToParentVar(state, 'outputVar2')).toBe(true);
+      expect(isToParentVar(state, 'otherVar')).toBe(false);
+    });
+
+    it('should combine with @to-parent into the same set', () => {
+      const source = `-- @to-parent: parentVar
+-- @to-csv: csvVar`;
+      const state = parseDirectives(source);
+
+      expect(isToParentVar(state, 'parentVar')).toBe(true);
+      expect(isToParentVar(state, 'csvVar')).toBe(true);
     });
   });
 
@@ -298,6 +350,63 @@ describe('Linter with Directives', () => {
       );
 
       expect(unusedMessages).toHaveLength(0);
+    });
+  });
+
+  describe('@from-url directive (alias for @from-parent)', () => {
+    it('should suppress no-undefined-vars for variables from URL', () => {
+      const linter = new Linter();
+      const source = `-- @from-url: inputVar
+>> x = inputVar`;
+      const result = linter.lint(source);
+
+      const undefinedMessages = result.messages.filter(
+        m => m.ruleId === 'no-undefined-vars' && m.message.includes('inputVar')
+      );
+
+      expect(undefinedMessages).toHaveLength(0);
+    });
+
+    it('should still report truly undefined variables', () => {
+      const linter = new Linter();
+      const source = `-- @from-url: inputVar
+>> x = otherVar`;
+      const result = linter.lint(source);
+
+      const undefinedMessages = result.messages.filter(
+        m => m.ruleId === 'no-undefined-vars' && m.message.includes('otherVar')
+      );
+
+      expect(undefinedMessages).toHaveLength(1);
+    });
+  });
+
+  describe('@to-csv directive (alias for @to-parent)', () => {
+    it('should suppress no-unused-vars for variables sent to CSV', () => {
+      const linter = new Linter();
+      const source = `-- @to-csv: outputVar
+>> outputVar = 42`;
+      const result = linter.lint(source);
+
+      const unusedMessages = result.messages.filter(
+        m => m.ruleId === 'no-unused-vars' && m.message.includes('outputVar')
+      );
+
+      expect(unusedMessages).toHaveLength(0);
+    });
+
+    it('should still report truly unused variables', () => {
+      const linter = new Linter();
+      const source = `-- @to-csv: outputVar
+>> outputVar = 42
+>> otherVar = 10`;
+      const result = linter.lint(source);
+
+      const unusedMessages = result.messages.filter(
+        m => m.ruleId === 'no-unused-vars' && m.message.includes('otherVar')
+      );
+
+      expect(unusedMessages).toHaveLength(1);
     });
   });
 

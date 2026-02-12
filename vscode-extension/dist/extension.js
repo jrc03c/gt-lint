@@ -4890,8 +4890,10 @@ var DIRECTIVES = [
   { label: "@gtformat-enable", detail: "Re-enable formatting", snippet: "@gtformat-enable" },
   // Variable tracking
   { label: "@from-parent:", detail: "Variables received from parent program", snippet: "@from-parent: ${1:var1, var2}" },
+  { label: "@from-url:", detail: "Variables received via URL query string (alias for @from-parent)", snippet: "@from-url: ${1:var1, var2}" },
   { label: "@from-child:", detail: "Variables received from child program", snippet: "@from-child: ${1:var1, var2}" },
   { label: "@to-parent:", detail: "Variables sent to parent program", snippet: "@to-parent: ${1:var1, var2}" },
+  { label: "@to-csv:", detail: "Variables collected in CSV export (alias for @to-parent)", snippet: "@to-csv: ${1:var1, var2}" },
   { label: "@to-child:", detail: "Variables sent to child program", snippet: "@to-child: ${1:var1, var2}" }
 ];
 var RULE_LIST_DIRECTIVES = [

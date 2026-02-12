@@ -406,6 +406,10 @@ Control linting and formatting behavior with special comments. Three prefix type
 
 Note: `gtformat-*` directives don't support rule lists since formatting isn't rule-based.
 
+**Variable tracking directives** (documented in the GTLint README) also support aliases:
+- `@from-url:` is an alias for `@from-parent:` (variables received via URL query string)
+- `@to-csv:` is an alias for `@to-parent:` (variables collected in CSV export)
+
 ## `*html` Blocks
 
 `*html` blocks embed raw HTML content:
@@ -464,7 +468,7 @@ The body of `*html` blocks is HTML, not GuidedTrack. The linter automatically su
 **Important distinctions:**
 - `*program:` is like a function call - it returns to the next line (unlike `*goto:`)
 - Comments starting with `-- gt-*`, `-- gtlint-*`, or `-- gtformat-*` are directives, not regular comments
-- Variables from parent programs (via `@from-parent:`) are not visible to the linter
+- Variables from parent programs (via `@from-parent:` or `@from-url:`) are not visible to the linter
 
 ## Notes for Implementation
 

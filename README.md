@@ -276,6 +276,26 @@ When writing a **parent program** that calls a child, use `@to-child` and `@from
 	We added you to our mailing list!
 ```
 
+### URL Query String Variables
+
+Variables can also be passed to a GuidedTrack program via URL query string parameters (e.g., `?x=5&name=Alice`). Use `@from-url` to document these — it behaves identically to `@from-parent` but communicates that the variable comes from the URL rather than a parent program:
+
+```
+-- @from-url: participant_id, condition
+*if: condition = "A"
+	Welcome to Group A!
+```
+
+### CSV Export Variables
+
+All variables in a GuidedTrack program are collected by the root parent program and made available as a CSV export. Use `@to-csv` to document variables whose primary purpose is to appear in the CSV — it behaves identically to `@to-parent` but communicates that the variable is intended for data collection rather than consumption by a parent program:
+
+```
+-- @to-csv: response_time, accuracy
+>> response_time = 0
+>> accuracy = 0
+```
+
 ### API Directive Reference
 
 **From child program's perspective:**
@@ -287,6 +307,11 @@ When writing a **parent program** that calls a child, use `@to-child` and `@from
 
 - `-- @to-child: var1, var2, ...` - Variables sent to child program (suppresses `no-unused-vars`)
 - `-- @from-child: var1, var2, ...` - Variables received from child program (suppresses `no-undefined-vars`)
+
+**Aliases:**
+
+- `-- @from-url: var1, var2, ...` - Alias for `@from-parent`; variables received via URL query string (suppresses `no-undefined-vars`)
+- `-- @to-csv: var1, var2, ...` - Alias for `@to-parent`; variables collected in CSV export (suppresses `no-unused-vars`)
 
 You can use multiple directives of the same type if needed:
 
