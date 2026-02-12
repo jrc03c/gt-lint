@@ -134,7 +134,14 @@ Linter rules can have these values:
 
 # Directives
 
-The linter's and formatter's behaviors can also be overridden by inline _directives_ written directly into `.gt` files. Here are the available directives and what they do:
+The linter's and formatter's behaviors can also be overridden by inline _directives_ written directly into `.gt` files. Directives are always commented out. For example:
+
+```
+-- @to-child: email_address
+*program: Add to Mailing List
+```
+
+Here are the available directives and what they do:
 
 **Combined (lint + format):**
 
